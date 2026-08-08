@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import handler, { cachePolicy } from "../api/og.js";
+import { cachePolicy, handler } from "../api/og.js";
 import { currentDay } from "../src/core/day-math.js";
 
 /**

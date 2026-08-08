@@ -88,6 +88,22 @@ describe("which host a function believes", () => {
     expect(publicOrigin(asked)).toBe("https://strata.example");
   });
 
+  it("speaks http to a loopback host, because vercel dev is not on TLS", () => {
+    // `vercel dev` sets the same variables to localhost. Assuming https there
+    // meant the HTML function could never fetch its own shell locally, so the
+    // one harness that runs these functions the way the platform does answered
+    // 503 on every page and nobody could use it.
+    vi.stubEnv("VERCEL_URL", "localhost:3999");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "127.0.0.1:3000");
+    expect(assetOrigin(asked)).toBe("http://localhost:3999");
+    expect(publicOrigin(asked)).toBe("http://127.0.0.1:3000");
+  });
+
+  it("still speaks https to everything that is not loopback", () => {
+    vi.stubEnv("VERCEL_URL", "localhost-of-evil.example");
+    expect(assetOrigin(asked)).toBe("https://localhost-of-evil.example");
+  });
+
   it("treats an empty variable as unset rather than building https://", () => {
     vi.stubEnv("VERCEL_URL", "");
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");

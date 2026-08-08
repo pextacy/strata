@@ -54,7 +54,7 @@ export interface Meta {
   readonly path: string;
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const meta = await metaFor(url.pathname);
 
@@ -91,11 +91,22 @@ export default async function handler(request: Request): Promise<Response> {
   });
 }
 
-/** One line, header-safe: no newlines, no control bytes, nothing exotic. */
-const detail = (error: unknown): string =>
-  (error instanceof Error ? error.message : String(error))
-    .replace(/[^\x20-\x7e]+/g, " ")
-    .slice(0, 200);
+/**
+ * One line, header-safe: no newlines, no control bytes, nothing exotic.
+ *
+ * The cause is included because without it this header said "fetch failed" and
+ * nothing else — which is what `fetch` throws for a refused connection, a DNS
+ * failure and a closed socket alike. Debugging a 503 from the outside with only
+ * those two words is guesswork, and the whole reason this header exists is so
+ * it does not have to be.
+ */
+function detail(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const cause = error instanceof Error && error.cause !== undefined ? error.cause : null;
+  const because =
+    cause === null ? "" : ` (${cause instanceof Error ? cause.message : String(cause)})`;
+  return `${message}${because}`.replace(/[^\x20-\x7e]+/g, " ").slice(0, 200);
+}
 
 export async function metaFor(pathname: string): Promise<Meta> {
   const day = matchDay(pathname);
@@ -201,11 +212,20 @@ async function loadShell(url: URL): Promise<string> {
   // open until the platform kills it, and the person gets a platform error page
   // instead of the sentence below. Short, because there is a real answer waiting
   // on the other side of giving up.
-  const res = await fetch(new URL("/index.html", assetOrigin(url)), {
-    headers: { "user-agent": "strata-html-shell" },
-    signal: AbortSignal.timeout(SHELL_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`the built shell answered ${res.status}`);
+  const shell = new URL("/index.html", assetOrigin(url));
+  let res: Response;
+  try {
+    res = await fetch(shell, {
+      headers: { "user-agent": "strata-html-shell" },
+      signal: AbortSignal.timeout(SHELL_TIMEOUT_MS),
+    });
+  } catch (error) {
+    // Name the address that could not be reached. Which origin this resolved to
+    // is the one fact worth having, and it is exactly what a bare "fetch failed"
+    // withholds.
+    throw new Error(`${shell.href} could not be reached`, { cause: error });
+  }
+  if (!res.ok) throw new Error(`${shell.href} answered ${res.status}`);
   return await res.text();
 }
 
@@ -288,3 +308,15 @@ const escapeAttr = (value: string): string => escapeHtml(value).replace(/"/g, "&
 
 const shorten = (address: string): string =>
   address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
+
+/**
+ * Exported as a `fetch` object, which is what makes Vercel hand this a Web
+ * `Request` and take a `Response` back.
+ *
+ * A bare `export default function handler(request)` is the Node.js signature:
+ * Vercel calls it with an `IncomingMessage`, whose `url` is a path like
+ * "/robots.txt" rather than an absolute URL, and `new URL()` on that throws
+ * before the handler runs a line. Every route 500d on exactly that. The named
+ * export stays so the tests can call it directly.
+ */
+export default { fetch: handler };

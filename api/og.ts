@@ -59,7 +59,7 @@ export const cachePolicy = (day: number, pinned: boolean): string => {
   return pinned ? SETTLED : RESOLVED;
 };
 
-export default async function handler(request: Request): Promise<Response> {
+export async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const rawDay = url.searchParams.get("day");
   const rawAddress = url.searchParams.get("address");
@@ -166,3 +166,15 @@ function problem(message: string, status = 400): Response {
     },
   });
 }
+
+/**
+ * Exported as a `fetch` object, which is what makes Vercel hand this a Web
+ * `Request` and take a `Response` back.
+ *
+ * A bare `export default function handler(request)` is the Node.js signature:
+ * Vercel calls it with an `IncomingMessage`, whose `url` is a path like
+ * "/robots.txt" rather than an absolute URL, and `new URL()` on that throws
+ * before the handler runs a line. Every route 500d on exactly that. The named
+ * export stays so the tests can call it directly.
+ */
+export default { fetch: handler };

@@ -26,7 +26,7 @@ export const config = { runtime: "nodejs", maxDuration: 10 };
  */
 const MAX_URLS = 50_000;
 
-export default function handler(request: Request): Response {
+export function handler(request: Request): Response {
   const origin = publicOrigin(new URL(request.url));
 
   return new Response(sitemap(origin, currentDay()), {
@@ -81,3 +81,15 @@ function escapeXml(value: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
+
+/**
+ * Exported as a `fetch` object, which is what makes Vercel hand this a Web
+ * `Request` and take a `Response` back.
+ *
+ * A bare `export default function handler(request)` is the Node.js signature:
+ * Vercel calls it with an `IncomingMessage`, whose `url` is a path like
+ * "/robots.txt" rather than an absolute URL, and `new URL()` on that throws
+ * before the handler runs a line. Every route 500d on exactly that. The named
+ * export stays so the tests can call it directly.
+ */
+export default { fetch: handler };

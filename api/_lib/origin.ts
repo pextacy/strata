@@ -11,6 +11,23 @@ const fromEnv = (name: string): string | null => {
 };
 
 /**
+ * These variables carry a host with no scheme, and on a deployment the scheme is
+ * always https. `vercel dev` sets the same variables to `localhost:3000`, where
+ * it is always http — so hardcoding https meant the HTML function spent every
+ * local run trying to fetch its own shell over TLS from a plain server, failing,
+ * and answering 503.
+ *
+ * That is worth more than the two lines it costs. `vercel dev` is the only way
+ * to run these functions the way the platform actually calls them, and both of
+ * the faults that took this site down — a module specifier the bundler forgave
+ * and a handler signature the tests could not see — would have shown up in it
+ * immediately. A local harness nobody can run is not a harness.
+ */
+const LOOPBACK = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
+
+const asOrigin = (host: string): string => `${LOOPBACK.test(host) ? "http" : "https"}://${host}`;
+
+/**
  * Where to fetch this deployment's own files from.
  *
  * `api/html.ts` fetches the built shell and then serves it as this site's HTML.
@@ -20,7 +37,7 @@ const fromEnv = (name: string): string | null => {
  */
 export function assetOrigin(url: URL): string {
   const deployment = fromEnv("VERCEL_URL");
-  return deployment === null ? url.origin : `https://${deployment}`;
+  return deployment === null ? url.origin : asOrigin(deployment);
 }
 
 /**
@@ -35,5 +52,5 @@ export function assetOrigin(url: URL): string {
  */
 export function publicOrigin(url: URL): string {
   const production = fromEnv("VERCEL_PROJECT_PRODUCTION_URL");
-  return production === null ? url.origin : `https://${production}`;
+  return production === null ? url.origin : asOrigin(production);
 }

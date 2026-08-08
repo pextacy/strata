@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import handler, {
+import {
+  handler,
   injectMeta,
   matchArtist,
   matchDay,

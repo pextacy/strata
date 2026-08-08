@@ -11,7 +11,7 @@ import { assetHeaders } from "./_lib/security.js";
 // Pure string building, no network. It either answers at once or never.
 export const config = { runtime: "nodejs", maxDuration: 10 };
 
-export default function handler(request: Request): Response {
+export function handler(request: Request): Response {
   return new Response(robots(publicOrigin(new URL(request.url))), {
     status: 200,
     headers: {
@@ -34,3 +34,15 @@ Allow: /
 # from the day pages that credit them.
 Sitemap: ${origin}/sitemap.xml
 `;
+
+/**
+ * Exported as a `fetch` object, which is what makes Vercel hand this a Web
+ * `Request` and take a `Response` back.
+ *
+ * A bare `export default function handler(request)` is the Node.js signature:
+ * Vercel calls it with an `IncomingMessage`, whose `url` is a path like
+ * "/robots.txt" rather than an absolute URL, and `new URL()` on that throws
+ * before the handler runs a line. Every route 500d on exactly that. The named
+ * export stays so the tests can call it directly.
+ */
+export default { fetch: handler };
