@@ -153,11 +153,15 @@ for (const day of days) {
   }
 }
 
-console.log("\n| day | size | placements | artists | painted cells | mismatched |");
-console.log("| --- | --- | --- | --- | --- | --- |");
+// Pasted straight into the README, so the theme name travels with the numbers —
+// it is the one column a reader can check against basepaint.xyz by eye.
+const n = new Intl.NumberFormat("en-US");
+console.log("\n| day | theme | size | placements | artists | painted cells | mismatched |");
+console.log("| --- | --- | --- | --- | --- | --- | --- |");
 for (const r of results) {
   console.log(
-    `| ${r.day} | ${r.size} | ${r.placements} | ${r.artists} | ${r.painted} | ${r.mismatched} |`,
+    `| ${r.day} | ${r.theme} | ${r.size}×${r.size} | ${n.format(r.placements)} | ${r.artists} | ` +
+      `${n.format(r.painted)} | **${r.mismatched}** |`,
   );
 }
 
