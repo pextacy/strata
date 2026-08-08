@@ -47,8 +47,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
-
+      # Before the tests, not after: one of them reads `dist/index.html` and
+      # checks it against the Content-Security-Policy it will be served with —
+      # an inline script in the build is invisible to every other check here and
+      # fatal in production. Without `dist/` that test skips, and a check that
+      # silently skips in CI is the same as not having it.
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test

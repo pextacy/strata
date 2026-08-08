@@ -1,10 +1,17 @@
-/* The column reads downwards, into the canvas: newest band at the top, oldest
-   at the bottom, the way a real core comes out of the ground. */
+/* The core sample, drawn as the object it describes.
+
+   One cell of the canvas, seen through time instead of through space: a
+   continuous strip of colour with no gaps and no rounding, newest at the top,
+   oldest at the bottom, the way a drill core comes out of the ground. The
+   writing sits in a gutter to the right and reaches back to its own band with a
+   leader line — a note beside a specimen, not a label stuck on it.
+
+   This is the one loud thing on the page. Everything around it stays quiet. */
 
 .core {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--u2);
   min-width: 0;
 }
 
@@ -18,7 +25,7 @@
 }
 
 .core-hint {
-  margin: 0.4rem 0 0;
+  margin: var(--u) 0 0;
   color: var(--muted);
   font-size: var(--step--1);
   max-width: 24rem;
@@ -26,32 +33,33 @@
 
 .core-where {
   display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  margin: 0.3rem 0 0;
+  align-items: center;
+  gap: var(--u2);
+  margin: var(--u) 0 0;
 }
 
 .core-coords {
-  font-size: var(--step-1);
   color: var(--accent);
 }
 
 .core-preview {
   color: var(--muted);
   font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-.core-note {
+.core-note-block {
   margin: 0;
-  padding: 0.75rem;
+  padding: var(--u2);
   background: var(--bg-raised);
-  border-left: 3px solid var(--line);
+  border-left: var(--u) solid var(--line);
   color: var(--muted);
   font-size: var(--step--1);
 }
 
 .core-summary {
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--u2);
   font-size: var(--step--1);
   color: var(--muted);
 }
@@ -61,54 +69,83 @@
   font-weight: 500;
 }
 
+/* No gap and no border: the plugs have to touch, or it stops being a core and
+   goes back to being a list. Newest first, matching the DOM — a
+   `column-reverse` container pins its scroll to the first child, which on a
+   deep cell meant opening on the oldest bands and clipping the one still on
+   the canvas. */
 .core-stack {
   display: flex;
-  /* Newest first, matching the DOM. A `column-reverse` container pins its scroll
-     to the first child, which on a deep cell meant opening on the oldest bands
-     and clipping the one still on the canvas. */
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  background: var(--line);
   max-height: 60vh;
   overflow-y: auto;
+  /* The core is lit from the left: a hard edge down the strip, nothing else. */
+  border-left: 1px solid var(--rule);
 }
 
 .core-band {
-  display: flex;
-  align-items: stretch;
-  gap: 0.6rem;
-  padding: 0.4rem 0.5rem;
-  background: var(--bg-raised);
-}
-
-/* A buried band is dimmed, but it also says "buried" in words — colour is never
-   the only thing carrying the meaning. */
-.core-band-buried {
-  background: var(--bg-sunken);
-}
-
-.core-band-buried .core-band-meta,
-.core-band-buried .core-painter {
-  opacity: 0.65;
-}
-
-.core-swatch {
+  display: grid;
+  grid-template-columns: var(--u4) var(--u2) minmax(0, 1fr) auto;
+  align-items: center;
+  /* Whole multiples of the module, so every band is the same height and the
+     strip reads as one continuous object. */
+  min-height: var(--u6);
+  column-gap: 0;
+  /* The stack is a column flex container with a max-height, and a flex item
+     shrinks below its own content when the container runs out of room. With
+     nineteen bands in a 60vh box that is every band: the rows collapsed to the
+     plug height and the notes printed on top of each other. A core sample scrolls;
+     it does not compress. */
   flex: 0 0 auto;
-  width: 1.6rem;
-  align-self: stretch;
-  min-height: 1.6rem;
-  border: 1px solid rgb(0 0 0 / 0.35);
 }
 
-.core-band-main {
+/* The plug: the actual colour, spanning the full height of its band with
+   nothing between it and its neighbours. */
+.core-plug {
+  grid-column: 1;
+  align-self: stretch;
+  min-height: var(--u6);
+}
+
+/* The leader line, from the plug out to its note. This is what makes the column
+   read as a specimen with writing beside it rather than as a list of rows, so
+   it has to be actually visible — at --rule over --bg it was a hairline nobody
+   could see, which is the same as not having drawn it. */
+.core-leader {
+  grid-column: 2;
+  height: 1px;
+  background: var(--line);
+}
+
+.core-band:first-child .core-leader {
+  background: var(--accent);
+}
+
+.core-note {
+  grid-column: 3;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0;
   min-width: 0;
+  padding: var(--u) 0 var(--u) var(--u);
+}
+
+/* Buried bands say "buried" in words as well — colour is never the only thing
+   carrying the meaning. The dither is what dims them: opacity would fade the
+   colour of the paint itself, which is the one value on this row that has to
+   stay true. */
+.core-band-buried .core-note {
+  --dither-ink: var(--bg);
+  background-image: repeating-conic-gradient(var(--dither-ink) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
+
+.core-band-buried .core-band-meta {
+  color: var(--muted);
 }
 
 .core-painter {
@@ -131,15 +168,29 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Depth, counted from the bottom. Right-aligned against the edge so the numbers
+   form their own column down the side of the core, like a scale bar. */
 .core-band-index {
-  margin-left: auto;
+  grid-column: 4;
   align-self: center;
+  padding-inline: var(--u);
   color: var(--muted);
   font-size: var(--step--1);
   font-variant-numeric: tabular-nums;
 }
 
-/* The marker over the picked cell. Two rings so it reads on any palette. */
+/* The band actually on the canvas is the one the summary above calls "the one
+   you can see", so it is marked rather than left to be inferred from position. */
+.core-band:first-child .core-plug {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.core-band:first-child .core-band-index {
+  color: var(--accent);
+}
+
+/* --- the marker over the picked cell -------------------------------------- */
+
 .cell-marker {
   position: absolute;
   pointer-events: none;
@@ -188,5 +239,5 @@
 
 .canvas-stage:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 0;
 }

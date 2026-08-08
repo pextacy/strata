@@ -167,7 +167,12 @@ describe("routes", () => {
   it("digs a day at /day/:day, with the time band and the core sample", () => {
     const html = route("/day/500");
     frame(html);
-    expect(html).toContain(">Day 500</h1>");
+    // The heading is drawn in the bitmap face, so the words sit in a span
+    // inside the h1 rather than directly in it. What matters is unchanged:
+    // the page's one heading names the day, in sentence case.
+    const heading = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(html)?.[1] ?? "";
+    expect(heading).toContain("Day 500");
+    expect(heading).not.toContain("DAY 500");
     // Canvas, then the axis under it, then the column beside it — PRD §6.
     expect(html).toContain("has-column");
     expect(html.indexOf("section-canvas")).toBeLessThan(html.indexOf("section-axis"));

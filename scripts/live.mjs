@@ -207,6 +207,27 @@ async function main() {
   );
   check("indexAtTime reports -1 before the first stroke", indexAtTime(p, p.time[0] - 1) === -1);
 
+  // On the boundary, not just near it. `indexAtTime` promises the last placement
+  // *at or before* a moment, and the placement laid on that very second is the
+  // whole difference between `<=` and `<`. Asking only about `time[0] - 1` —
+  // which no stroke sits on — cannot tell the two apart, so this asks about
+  // seconds that strokes actually landed on.
+  let boundaryOk = true;
+  let boundaryDetail = "";
+  for (const k of [0, p.n >> 2, p.n >> 1, p.n - 1]) {
+    const at = p.time[k];
+    // The last index sharing this second — several strokes can.
+    let expected = k;
+    while (expected + 1 < p.n && p.time[expected + 1] === at) expected++;
+    const got = indexAtTime(p, at);
+    if (got !== expected) {
+      boundaryOk = false;
+      boundaryDetail = `at ${at} got ${got}, expected ${expected}`;
+      break;
+    }
+  }
+  check("indexAtTime includes a placement laid on the exact second", boundaryOk, boundaryDetail);
+
   // The end of an open day is hours away and empty. Scrubbing there must land on
   // the same canvas the last stroke left, not on a partial frame.
   const atDayEnd = timeline.frameAtTime(to);
@@ -261,6 +282,45 @@ async function main() {
     sample.bands.every((b) => /^0x[0-9a-f]{40}$/.test(p.artists[b.artist])),
   );
 
+  // The layer buffers, read against something that did not build them.
+  //
+  // Every `sameLayers` comparison above runs the same `replayInto` down both
+  // sides, so it proves the keyframes were copied from the right slot and
+  // nothing about what a layer means: change what `buried` holds and both sides
+  // change together, in step, silently. `coreSample` walks the placements
+  // itself and never touches those buffers, so it is the one thing here that can
+  // disagree with them.
+  const deepCells = [];
+  for (let cell = 0; cell < layers.depth.length && deepCells.length < 200; cell++) {
+    if (layers.depth[cell] > 1) deepCells.push(cell);
+  }
+  let layersAgree = true;
+  let disagreement = "";
+  for (const cell of deepCells) {
+    const drilled = coreSample(p, size, cell % size, Math.floor(cell / size));
+    const bands = drilled.bands;
+    const want = {
+      depth: bands.length,
+      final: bands[bands.length - 1].color,
+      first: bands[0].color,
+      buried: bands[bands.length - 2].color,
+      lastArtist: bands[bands.length - 1].artist,
+    };
+    for (const [key, value] of Object.entries(want)) {
+      if (layers[key][cell] !== value) {
+        layersAgree = false;
+        disagreement = `cell ${cell}: ${key} is ${layers[key][cell]}, the stack says ${value}`;
+        break;
+      }
+    }
+    if (!layersAgree) break;
+  }
+  check(
+    `every layer buffer agrees with the drilled stack on ${deepCells.length} contested cells`,
+    layersAgree,
+    disagreement,
+  );
+
   // ---- survival ------------------------------------------------------------
   //
   // The artist holding the most cells right now. On an open day their record is
@@ -294,6 +354,28 @@ async function main() {
     check(
       "placements are counted per pixel, not per cell",
       record.placements >= record.cellsTouched,
+    );
+
+    // Counted again, the slow way. `cellsTouched` sorts composite keys and skips
+    // repeats; the inequalities above only bound it from one side, so dropping
+    // that skip inflates the figure and every one of them still holds. A Set
+    // cannot be talked into the same mistake.
+    const distinct = new Set();
+    let placed = 0;
+    for (let i = 0; i < p.n; i++) {
+      if (p.artist[i] !== top) continue;
+      placed++;
+      distinct.add(p.y[i] * size + p.x[i]);
+    }
+    check(
+      "cells touched is distinct cells, not placements counted twice",
+      record.cellsTouched === distinct.size,
+      `record says ${record.cellsTouched}, a set of their cells holds ${distinct.size}`,
+    );
+    check(
+      "pixels placed matches a straight count of their placements",
+      record.placements === placed,
+      `record says ${record.placements}, counted ${placed}`,
     );
     check(
       "an artist is never listed as covering themselves",

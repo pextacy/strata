@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import type { Band } from "../core/coreSample.ts";
 import type { Pixel } from "../core/pixel.ts";
 import { Address } from "./Address.tsx";
+import { PixelText } from "./PixelText.tsx";
 import { formatElapsed } from "./format.ts";
 import "./CoreSample.css";
 
@@ -62,10 +63,10 @@ export function CoreSample({
           </p>
         ) : (
           <p className="core-where">
-            <code className="core-coords">
-              {pixel.x}, {pixel.y}
-            </code>
-            {preview && <span className="core-preview"> · previewing</span>}
+            {/* The coordinate in the instrument's own face, matching the ticks
+                on the rulers it was read off. */}
+            <PixelText className="core-coords" scale={4}>{`${pixel.x}, ${pixel.y}`}</PixelText>
+            {preview && <span className="core-preview">previewing</span>}
           </p>
         )}
       </header>
@@ -73,11 +74,11 @@ export function CoreSample({
       {pixel !== null && (
         <div className="core-body">
           {loading ? (
-            <p role="status" className="core-note">
+            <p role="status" className="core-note-block">
               Reading the strokes for this day…
             </p>
           ) : bands.length === 0 ? (
-            <p role="status" className="core-note">
+            <p role="status" className="core-note-block">
               {laterBands === 0
                 ? "Nothing was ever painted here. This cell is still the colour the canvas started as."
                 : `Nothing here yet at this moment. This cell is painted ${laterBands} ${
@@ -111,6 +112,19 @@ export function CoreSample({
                   summary directly above calls "the one you can see". Reading
                   down from the surface also puts keyboard focus in the order
                   the eye moves. */}
+              {/* The core itself.
+
+                  What this column is, literally, is one cell of the canvas seen
+                  through time instead of through space — so it is drawn as one:
+                  a continuous strip of hard-edged colour, no gaps, no rounding,
+                  as though a drill had been sunk into the image and the plug
+                  pulled out. The writing lives in a gutter beside it and reaches
+                  back to its own band with a leader line, the way a note is
+                  written beside a specimen rather than on it.
+
+                  The earlier version put the swatch inside a padded row with the
+                  text, which reads as a list of events. It was a list of events.
+                  This reads as an object, which is what the data actually is. */}
               <ol className="core-stack">
                 {bands.toReversed().map((band, index) => (
                   <li
@@ -118,11 +132,12 @@ export function CoreSample({
                     className={band.buried ? "core-band core-band-buried" : "core-band"}
                   >
                     <span
-                      className="core-swatch"
+                      className="core-plug"
                       style={{ background: palette[band.color] ?? "transparent" }}
                       aria-hidden="true"
                     />
-                    <span className="core-band-main">
+                    <span className="core-leader" aria-hidden="true" />
+                    <span className="core-note">
                       <Link className="core-painter" to={`/artist/${artists[band.artist] ?? ""}`}>
                         <Address address={artists[band.artist] ?? ""} />
                       </Link>

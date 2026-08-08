@@ -9,6 +9,7 @@
 //   npm run verify -- 500
 //   npm run verify -- 1 300 366 500 1000
 
+import { pathToFileURL } from "node:url";
 import { PNG } from "pngjs";
 import { PlacementsBuilder, hasAnomalies } from "../src/core/decode.ts";
 import { replay } from "../src/core/replay.ts";
@@ -54,42 +55,7 @@ async function verifyDay(day, limit) {
     throw new Error(`official image is ${png.width}px for a ${size}px canvas — not an integer scale`);
   }
 
-  const packed = palette.map(packHex);
-  const mismatches = [];
-  let painted = 0;
-  let mismatched = 0;
-  let unpainted = 0;
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const cell = y * size + x;
-      const at = (y * scale * png.width + x * scale) * 4;
-      const r = png.data[at];
-      const g = png.data[at + 1];
-      const b = png.data[at + 2];
-      const a = png.data[at + 3];
-      const actual = (r << 16) | (g << 8) | b;
-
-      // The canvas starts as palette index 0 everywhere, so a cell nobody
-      // painted still renders — as the first colour of the day's palette.
-      const wasPainted = layers.depth[cell] > 0;
-      if (wasPainted) painted++;
-      else unpainted++;
-
-      const expected = packed[wasPainted ? layers.final[cell] : 0];
-      if (a === 0 || expected === undefined || actual !== expected) {
-        mismatched++;
-        if (mismatches.length < 10) {
-          mismatches.push({
-            x,
-            y,
-            expected: expected === undefined ? `palette index ${layers.final[cell]}` : hex(expected),
-            actual: a === 0 ? "transparent" : hex(actual),
-          });
-        }
-      }
-    }
-  }
+  const compared = compareRender(layers, png, size, scale, palette.map(packHex));
 
   return {
     day,
@@ -99,70 +65,139 @@ async function verifyDay(day, limit) {
     pages,
     placements: placements.n,
     artists: placements.artists.length,
-    painted,
-    mismatched,
-    unpainted,
-    samples: mismatches.slice(0, 10),
+    ...compared,
     anomalies: builder.anomalies,
   };
+}
+
+/**
+ * The replayed canvas against the decoded PNG, cell by cell and — where a cell
+ * is drawn as more than one device pixel — device pixel by device pixel.
+ *
+ * Pure, exported, and tested, because the only renders published so far are 1x,
+ * where the block loop below collapses to the single sample the old code took.
+ * A branch that no real day exercises is a branch nobody has checked, and this
+ * one carries the project's only hard claim.
+ */
+export function compareRender(layers, png, size, scale, packed) {
+  const mismatches = [];
+  let painted = 0;
+  let mismatched = 0;
+  let unpainted = 0;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const cell = y * size + x;
+
+      // The canvas starts as palette index 0 everywhere, so a cell nobody
+      // painted still renders — as the first colour of the day's palette.
+      const wasPainted = layers.depth[cell] > 0;
+      if (wasPainted) painted++;
+      else unpainted++;
+
+      const expected = packed[wasPainted ? layers.final[cell] : 0];
+
+      // Every device pixel of the block, not just its corner. This read the
+      // top-left sample alone, which at 1x is the whole cell and at anything
+      // else is a cell whose corner happens to match passing for one that does.
+      let wrong = null;
+      for (let dy = 0; dy < scale && wrong === null; dy++) {
+        for (let dx = 0; dx < scale; dx++) {
+          const at = ((y * scale + dy) * png.width + (x * scale + dx)) * 4;
+          const a = png.data[at + 3];
+          const actual = (png.data[at] << 16) | (png.data[at + 1] << 8) | png.data[at + 2];
+          if (a === 0 || expected === undefined || actual !== expected) {
+            wrong = { a, actual, dx, dy };
+            break;
+          }
+        }
+      }
+
+      if (wrong !== null) {
+        mismatched++;
+        if (mismatches.length < 10) {
+          mismatches.push({
+            x,
+            y,
+            expected: expected === undefined ? `palette index ${layers.final[cell]}` : hex(expected),
+            actual: wrong.a === 0 ? "transparent" : hex(wrong.actual),
+            // Which pixel of the cell disagreed, when a cell is more than one.
+            at: scale === 1 ? "" : ` (device pixel +${wrong.dx},+${wrong.dy} of ${scale}x${scale})`,
+          });
+        }
+      }
+    }
+  }
+
+  return { painted, mismatched, unpainted, samples: mismatches.slice(0, 10) };
 }
 
 function hex(v) {
   return `#${v.toString(16).padStart(6, "0")}`;
 }
 
-const argv = process.argv.slice(2);
-// --limit=N forces the paged path. No real day has ever had more than a
-// thousand strokes, so this is the only way to prove page assembly is right.
-const limitArg = argv.find((a) => a.startsWith("--limit="));
-const limit = limitArg === undefined ? undefined : Number(limitArg.slice("--limit=".length));
-const days = argv.filter((a) => !a.startsWith("--")).map(Number).filter(Number.isInteger);
+// Only when run as the program. A test imports `compareRender` from here, and
+// importing a module must not start replaying days from the chain.
+const invokedDirectly =
+  process.argv[1] !== undefined &&
+  pathToFileURL(process.argv[1]).href === import.meta.url;
 
-if (days.length === 0) {
-  console.error("usage: npm run verify -- <day> [day...] [--limit=N]");
-  process.exit(2);
-}
+if (invokedDirectly) await cli();
 
-const results = [];
-let failed = false;
+async function cli() {
+  const argv = process.argv.slice(2);
+  // --limit=N forces the paged path. No real day has ever had more than a
+  // thousand strokes, so this is the only way to prove page assembly is right.
+  const limitArg = argv.find((a) => a.startsWith("--limit="));
+  const limit = limitArg === undefined ? undefined : Number(limitArg.slice("--limit=".length));
+  const days = argv.filter((a) => !a.startsWith("--")).map(Number).filter(Number.isInteger);
 
-for (const day of days) {
-  console.log(`\nday ${day}`);
-  try {
-    const r = await verifyDay(day, limit);
-    results.push(r);
-    const ok = r.mismatched === 0;
-    if (!ok) failed = true;
-    console.log(
-      `  ${ok ? "MATCH" : "MISMATCH"}  size ${r.size}  scale ${r.scale}x  ` +
-        `${r.placements} placements  ${r.artists} artists  ${r.painted} painted cells  ` +
-        `${r.mismatched} mismatched`,
-    );
-    if (hasAnomalies(r.anomalies)) {
-      console.log(
-        `  anomalies: ${r.anomalies.malformedStrokes} malformed strokes, ` +
-          `${r.anomalies.offCanvas} off-canvas pixels, ${r.anomalies.unknownColor} unknown colours`,
-      );
-    }
-    for (const m of r.samples) {
-      console.log(`    (${m.x},${m.y}) expected ${m.expected} got ${m.actual}`);
-    }
-  } catch (err) {
-    failed = true;
-    console.log(`  FAILED  ${err instanceof Error ? err.message : String(err)}`);
+  if (days.length === 0) {
+    console.error("usage: npm run verify -- <day> [day...] [--limit=N]");
+    process.exit(2);
   }
-}
 
-// Pasted straight into the README, so the theme name travels with the numbers —
-// it is the one column a reader can check against basepaint.xyz by eye.
-const n = new Intl.NumberFormat("en-US");
-console.log("\n| day | theme | size | placements | artists | painted cells | mismatched |");
-console.log("| --- | --- | --- | --- | --- | --- | --- |");
-for (const r of results) {
-  console.log(
-    `| ${r.day} | ${r.theme} | ${r.size}×${r.size} | ${n.format(r.placements)} | ${r.artists} | ` +
-      `${n.format(r.painted)} | **${r.mismatched}** |`,
-  );
-}
+  const results = [];
+  let failed = false;
 
-process.exit(failed ? 1 : 0);
+  for (const day of days) {
+    console.log(`\nday ${day}`);
+    try {
+      const r = await verifyDay(day, limit);
+      results.push(r);
+      const ok = r.mismatched === 0;
+      if (!ok) failed = true;
+      console.log(
+        `  ${ok ? "MATCH" : "MISMATCH"}  size ${r.size}  scale ${r.scale}x  ` +
+          `${r.placements} placements  ${r.artists} artists  ${r.painted} painted cells  ` +
+          `${r.mismatched} mismatched`,
+      );
+      if (hasAnomalies(r.anomalies)) {
+        console.log(
+          `  anomalies: ${r.anomalies.malformedStrokes} malformed strokes, ` +
+            `${r.anomalies.offCanvas} off-canvas pixels, ${r.anomalies.unknownColor} unknown colours`,
+        );
+      }
+      for (const m of r.samples) {
+        console.log(`    (${m.x},${m.y}) expected ${m.expected} got ${m.actual}${m.at ?? ""}`);
+      }
+    } catch (err) {
+      failed = true;
+      console.log(`  FAILED  ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // Pasted straight into the README, so the theme name travels with the numbers —
+  // it is the one column a reader can check against basepaint.xyz by eye.
+  const n = new Intl.NumberFormat("en-US");
+  console.log("\n| day | theme | size | placements | artists | painted cells | mismatched |");
+  console.log("| --- | --- | --- | --- | --- | --- | --- |");
+  for (const r of results) {
+    console.log(
+      `| ${r.day} | ${r.theme} | ${r.size}×${r.size} | ${n.format(r.placements)} | ${r.artists} | ` +
+        `${n.format(r.painted)} | **${r.mismatched}** |`,
+    );
+  }
+
+  process.exit(failed ? 1 : 0);
+}

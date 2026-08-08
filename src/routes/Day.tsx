@@ -23,6 +23,7 @@ import { CoreSample } from "../ui/CoreSample.tsx";
 import { DepthLegend } from "../ui/DepthLegend.tsx";
 import { MintButton } from "../ui/MintButton.tsx";
 import { ModeSwitch } from "../ui/ModeSwitch.tsx";
+import { PixelText } from "../ui/PixelText.tsx";
 import { Scrubber } from "../ui/Scrubber.tsx";
 import { Section } from "../ui/Section.tsx";
 import { Stat } from "../ui/Stat.tsx";
@@ -166,7 +167,15 @@ function Excavation({ day }: { readonly day: number }) {
       className="excavation"
       head={
         <>
-          <h1>Day {day}</h1>
+          {/* The loudest number on the page, in the face the canvas is drawn
+              with. `PixelText` keeps the real words in the DOM, so this is
+              still a heading a screen reader reads and a link preview quotes. */}
+          <h1 className="day-title">
+            {/* Sentence case here, not shouting: `fontSafe` folds to uppercase
+                when it draws, so the glyphs are capitals and the heading a
+                screen reader reads is still "Day 500". */}
+            <PixelText scale={6}>{`Day ${day}`}</PixelText>
+          </h1>
           {data !== null && <p className="day-theme">{data.theme.theme}</p>}
           <p className="day-open">
             {open

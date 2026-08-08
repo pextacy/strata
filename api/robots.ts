@@ -8,7 +8,8 @@
 import { publicOrigin } from "./_lib/origin.ts";
 import { assetHeaders } from "./_lib/security.ts";
 
-export const config = { runtime: "nodejs" };
+// Pure string building, no network. It either answers at once or never.
+export const config = { runtime: "nodejs", maxDuration: 10 };
 
 export default function handler(request: Request): Response {
   return new Response(robots(publicOrigin(new URL(request.url))), {

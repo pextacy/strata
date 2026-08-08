@@ -49,16 +49,24 @@ async function introspectType(name) {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
+      // Five levels of `ofType`, because a page's `items` is
+      // NON_NULL → LIST → NON_NULL → OBJECT and three levels stopped one short
+      // of the name — leaving the committed schema unable to say what a list of
+      // strokes is a list of, which is exactly what a query has to be checked
+      // against.
       query: `
         query T($name: String!) {
           __type(name: $name) {
             name
             kind
-            inputFields { name type { kind name ofType { kind name } } }
+            inputFields { name type { kind name ofType { kind name ofType { kind name } } } }
             fields {
               name
-              type { kind name ofType { kind name ofType { kind name } } }
-              args { name type { kind name ofType { kind name } } }
+              type {
+                kind name
+                ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
+              }
+              args { name type { kind name ofType { kind name ofType { kind name } } } }
             }
           }
         }`,
@@ -85,8 +93,21 @@ const interesting = fields
   .map((f) => f.name)
   .filter((n) => /^(stroke|canvas|account|contribution)s?$/i.test(n));
 
+// Every type any query in src/data/queries.ts selects a field from, so
+// tests/queries.test.ts can check those selections without a network call.
+// Adding a type to a query means adding it here and re-running this script.
 const types = {};
-for (const name of ["Stroke", "Canvas", "StrokeFilter", "StrokePage"]) {
+for (const name of [
+  "Stroke",
+  "StrokeFilter",
+  "StrokePage",
+  "Canvas",
+  "Account",
+  "Contribution",
+  "ContributionFilter",
+  "ContributionPage",
+  "PageInfo",
+]) {
   const type = await introspectType(name);
   if (type) types[name] = type;
 }

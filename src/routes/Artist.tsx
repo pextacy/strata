@@ -14,6 +14,7 @@ import { basepaintUrl } from "../data/links.ts";
 import { useArtist } from "../data/useArtist.ts";
 import type { AccountRecord } from "../data/queries.ts";
 import { Address } from "../ui/Address.tsx";
+import { PixelText } from "../ui/PixelText.tsx";
 import { Stat } from "../ui/Stat.tsx";
 import { Failure, Nothing } from "../ui/states.tsx";
 import { useDocumentTitle } from "../ui/useDocumentTitle.ts";
@@ -132,7 +133,11 @@ export default function Artist() {
         <>
           <section className="survival" aria-label="Survival">
             <p className="survival-rate">
-              <span className="survival-figure">{percent(lifetime.survival ?? 0)}</span>
+              {/* The one number this page exists to give, in the face the
+                  canvases are drawn with. */}
+              <PixelText className="survival-figure" scale={7}>
+                {percent(lifetime.survival ?? 0)}
+              </PixelText>
               <span className="survival-caption">
                 of the cells they painted still carry their colour
               </span>

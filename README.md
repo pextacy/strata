@@ -50,6 +50,23 @@ Reproduce it with `npm run verify -- 1 100 250 365 366 500 750 900 1000 1094`. D
 
 What the table does not show is that reaching zero means handling the strokes that are themselves malformed, and `npm run verify` prints those separately for every day. Some pixels address coordinates off the edge of the canvas — 97 of them on day 1, 600 on day 100 — and some name a palette slot the day does not have, like the 52 on day 500. BasePaint's own renderer ignores both kinds, so Strata ignores both and counts them out loud rather than quietly dropping them.
 
+### What runs without a network
+
+Both checks above need two third-party services to be up, which is why neither
+runs on a pull request. What does is a differential fuzz: forty seeded random
+days, replayed twice — once by `src/core` and once by a second, deliberately
+slow implementation written from the definitions rather than from the code — and
+the two are made to agree. It covers the scrub keyframes, the core sample, the
+survival counts, the binary search over timestamps, and the join that resumes
+today's canvas from the last stroke already held.
+
+The days are hostile in the ways real ones are not: canvases one and two cells
+across, palettes of a single colour, pixels addressed off the edge, colours the
+day does not have, and a scrub order that jumps backwards and lands on the same
+frame twice. Its worth was measured rather than assumed — fourteen deliberate
+bugs were introduced into `src/core` one at a time, and the suite caught all
+fourteen.
+
 ### The day that has no answer to diff against
 
 `basepaint.net` publishes a render only once a day has closed, so today's canvas cannot be diffed at all. `npm run live` drives it end to end instead — fetch, decode, replay, build the scrub keyframes, scrub across the elapsed window and back, drill the deepest cell, compute the leading artist's record — and checks the invariants that survive without a reference image: paint only accumulates going forward, the moment before the first stroke is blank, scrubbing to the day's end lands on the canvas the last stroke left, and a rewind followed by a second pass rebuilds it exactly.
@@ -67,15 +84,19 @@ Node 22 or newer. CI builds on 22 and 24; the Vercel functions run on 22.
 
 `src/data/schema.json` is committed, so a clean checkout builds and runs without touching the network. It is the record of what the indexer's schema actually says, and every GraphQL field name in `src/data/queries.ts` was read out of it rather than guessed. Re-run `npm run introspect` — a real network call — before changing a query, and commit what it writes.
 
+That is checked rather than trusted: `npm test` parses every query in `queries.ts` and walks it against the committed schema — root fields, their arguments, the columns a `where` clause filters on, and the type each selection descends into. A misspelled field is caught there instead of at runtime in somebody's browser, which is the only other place it would ever show. A query that reaches into a type the schema does not carry fails the test rather than skipping it; add the type to the list in `scripts/introspect.mjs` and re-run.
+
 There is no backend and no database. Every number on screen is derived at runtime from the BasePaint indexer and the BasePaint theme API; decoded days are cached in the browser's IndexedDB so a second visit is instant.
 
 A render that throws does not blank the page. Every page sits inside an error boundary that keeps the header and the day navigation alive, says what broke in words, and shows the underlying error rather than swallowing it — and clears itself when you navigate, so one bad page does not follow you around the site.
+
+Nor does a request that never answers. `fetch` has no timeout of its own, so every one Strata makes is given fifteen seconds — covering the body as well as the headers, because an indexer that sends a 200 and then stops mid-JSON stalls exactly as hard as one that never replies. Running out of time is treated as a blip worth retrying, and when the retries are spent it fails with a sentence like any other failure. The alternative is the one loading state this project could not otherwise reach: a stroke counter sitting at zero until somebody reloads the tab, which is the spinner-that-says-nothing that everything else here exists to avoid. The serverless functions declare `maxDuration` to match that budget, so a stalling upstream ends in Strata's own words rather than the platform's error page.
 
 | command | what it does |
 | --- | --- |
 | `npm run dev` | Vite dev server |
 | `npm run build` | typecheck, then build to `dist/` |
-| `npm run test` | decoder, replay, keyframe, survival, render, page-meta, header and bundle tests |
+| `npm run test` | decoder, replay, keyframe, survival, render, page-meta, card, header, contrast, accessibility and bundle tests, plus a differential fuzz over `src/core` and the built shell read against its own CSP |
 | `npm run typecheck` | `tsc -b` |
 | `npm run lint` | oxlint |
 | `npm run verify -- 500` | replay day 500 and diff it against the official PNG |
@@ -98,6 +119,8 @@ Every variable is optional; copy `.env.example` to `.env.local` to set any of th
 Every path that is not a static file is served by `api/html.ts`, the homepage included — a crawler does not run the router, so the title, description and card have to be on the HTML it is handed. That function is also what makes a wrong URL answer `404` rather than `200`: the app is one document for every route, and without it `/day/99999` would invite indexing. Two things it will not take from the request are the host it fetches its own shell from and the domain it writes into canonical links, both of which come from the deployment's own environment; `Host: evil.example` puts that string nowhere in the response, and there is a test that says so.
 
 `/robots.txt` and `/sitemap.xml` are functions rather than files in `public/`, because both need to name the production domain and a static file cannot know it. The sitemap lists every day that has closed, with the date it closed.
+
+`/api/og` is the most expensive thing here — a cold request replays a whole day to draw the card, which is the point, because a card built any other way could disagree with the page it advertises. So how long the CDN keeps one is decided by what the card is a *function of*, not by how it was requested. A card pinned to a day that has closed is settled history and is kept for a month; today's is kept for five minutes; and a card that had to work out *which* day — `?address=` with no `?day=` — is kept for an hour, because it answers "their most recent closed canvas" and that becomes a different canvas every night. Every card URL the site emits carries `v=`, from `api/_lib/cardVersion.ts`: it is the only way a redesign can reach a cache that has been told to hold the picture for a month. The function ignores it, which is what makes it safe to bump.
 
 The security headers — the content security policy above all — are in `api/_lib/security.ts`. The policy is repeated once in `vercel.json`, for the built `index.html` that Vercel serves off disk, and a test fails if the two ever disagree. `script-src 'self'` holds only because the built shell has no inline script; anything that adds one breaks the app loudly rather than weakening the policy quietly.
 

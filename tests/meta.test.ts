@@ -9,6 +9,8 @@ import handler, {
   metaFor,
   type Meta,
 } from "../api/html.ts";
+import { CARD_VERSION } from "../api/_lib/cardVersion.ts";
+import { checksumAddress } from "../src/data/address.ts";
 import { currentDay } from "../src/core/day-math.ts";
 
 /**
@@ -26,6 +28,7 @@ const meta = (over: Partial<Meta> = {}): Meta => ({
   card: "day=500",
   cacheControl: "public",
   status: 200,
+  path: "/day/500",
   ...over,
 });
 
@@ -106,8 +109,78 @@ describe("the status a route answers with", () => {
   });
 });
 
+/**
+ * One page, one URL. Several spellings reach each page — an address has an
+ * upper, a lower and a checksummed form, and a day answers with or without a
+ * trailing slash — and every one of them answers 200 with the same document. If
+ * the canonical link echoes the path it was asked for, a crawler is told those
+ * are separate pages, and the artist URL the app itself settles on is named by
+ * none of them.
+ */
+describe("the canonical spelling of a page", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const lower = "0xefa845164e612fe623ac21380afc8ec78f22e3c3";
+  const checksummed = "0xeFa845164E612fe623ac21380AfC8ec78F22e3c3";
+
+  it("gives every spelling of an artist URL the checksummed one", async () => {
+    for (const spelling of [lower, checksummed, `0x${lower.slice(2).toUpperCase()}`]) {
+      expect((await metaFor(`/artist/${spelling}`)).path).toBe(`/artist/${checksummed}`);
+    }
+  });
+
+  it("is the same path the app rewrites the address bar to", async () => {
+    // `Artist.tsx` navigates to `/artist/${checksumAddress(raw)}` on mount. A
+    // canonical naming anything else points a crawler at a URL that redirects.
+    expect((await metaFor(`/artist/${lower}`)).path).toBe(`/artist/${checksumAddress(lower)}`);
+  });
+
+  it("drops a trailing slash and leading zeroes from a day", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
+    expect((await metaFor("/day/500")).path).toBe("/day/500");
+    expect((await metaFor("/day/500/")).path).toBe("/day/500");
+    expect((await metaFor("/day/0500")).path).toBe("/day/500");
+  });
+
+  it("names the homepage once, however it was asked for", async () => {
+    expect((await metaFor("/")).path).toBe("/");
+    expect((await metaFor("")).path).toBe("/");
+  });
+
+  it("leaves a wrong URL as it was — there is nothing to normalise it to", async () => {
+    expect((await metaFor("/wp-admin")).path).toBe("/wp-admin");
+  });
+
+  /**
+   * A card for a closed day is kept by the CDN for a month, because nothing
+   * about it can change — except this repository redrawing it, which no cache
+   * can know about. The version is how that gets said. Without it in the URL,
+   * a redesign would reach nobody until the entries aged out.
+   */
+  it("stamps the card design's version into every card URL", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
+    for (const path of ["/", "/day/500", `/artist/${lower}`]) {
+      const { card } = await metaFor(path);
+      expect(card, path).toContain(`v=${CARD_VERSION}`);
+    }
+  });
+
+  it("leaves the version off a route that has no card of its own", async () => {
+    expect((await metaFor("/wp-admin")).card).toBeNull();
+  });
+
+  it("writes that spelling into the canonical link and the card, not the request", async () => {
+    const html = injectMeta(SHELL, await metaFor(`/artist/${lower}`), ORIGIN);
+    expect(html).toContain(`rel="canonical" href="${ORIGIN}/artist/${checksummed}"`);
+    expect(html).toContain(`property="og:url" content="${ORIGIN}/artist/${checksummed}"`);
+    expect(html).not.toContain(lower);
+  });
+});
+
 describe("injectMeta", () => {
-  const html = injectMeta(SHELL, meta(), ORIGIN, "/day/500");
+  const html = injectMeta(SHELL, meta(), ORIGIN);
 
   it("leaves exactly one title and one description", () => {
     expect(count(html, /<title>/g)).toBe(1);
@@ -136,9 +209,8 @@ describe("injectMeta", () => {
   it("treats a theme name as text, never as markup", () => {
     const nasty = injectMeta(
       SHELL,
-      meta({ title: `Day 1: <script>alert("x")</script> & co` }),
+      meta({ title: `Day 1: <script>alert("x")</script> & co`, path: "/day/1" }),
       ORIGIN,
-      "/day/1",
     );
     expect(nasty).not.toContain("<script>alert");
     expect(nasty).toContain("&lt;script&gt;");
@@ -147,13 +219,13 @@ describe("injectMeta", () => {
   });
 
   it("falls back to a small card when a route has none of its own", () => {
-    const plain = injectMeta(SHELL, meta({ card: null }), ORIGIN, "/nowhere");
+    const plain = injectMeta(SHELL, meta({ card: null, path: "/nowhere" }), ORIGIN);
     expect(plain).toContain('name="twitter:card" content="summary"');
     expect(count(plain, /property="og:image"/g)).toBe(0);
   });
 
   it("tells a crawler not to keep a page that does not exist", () => {
-    const gone = injectMeta(SHELL, meta({ status: 404, card: null }), ORIGIN, "/wp-admin");
+    const gone = injectMeta(SHELL, meta({ status: 404, card: null, path: "/wp-admin" }), ORIGIN);
     expect(gone).toContain('name="robots" content="noindex, follow"');
   });
 
@@ -161,11 +233,30 @@ describe("injectMeta", () => {
     expect(html).not.toContain('name="robots"');
   });
 
+  /**
+   * The shell carries `noindex`, because `/index.html` is reachable on its own
+   * and is a second copy of the homepage with no canonical link. Every page this
+   * function serves is a real page, so the tag has to come off on the way
+   * through — leaving it would quietly deindex the whole site, and it would look
+   * exactly like everything working.
+   */
+  it("takes the shell's noindex off a page that is real", () => {
+    expect(SHELL).toContain('name="robots" content="noindex"');
+    expect(html).not.toContain("noindex");
+  });
+
+  it("still says noindex on a page that is not", () => {
+    const gone = injectMeta(SHELL, meta({ status: 404, card: null, path: "/wp-admin" }), ORIGIN);
+    // Once, from this function — not twice, and not the shell's copy surviving.
+    expect(gone.match(/name="robots"/g)).toHaveLength(1);
+    expect(gone).toContain('name="robots" content="noindex, follow"');
+  });
+
   it("serves the app even when the shell has no head to inject into", () => {
     // A broken build is not a reason to fail the request: the page still runs,
     // it just goes out without per-route tags.
     const headless = '<!doctype html><html><body><div id="root"></div></body></html>';
-    const out = injectMeta(headless, meta(), ORIGIN, "/day/500");
+    const out = injectMeta(headless, meta(), ORIGIN);
     expect(out).toContain('<div id="root">');
   });
 });

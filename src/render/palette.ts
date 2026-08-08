@@ -20,6 +20,26 @@ export function packRgba(r: number, g: number, b: number, a = 255): number {
   );
 }
 
+/**
+ * Reading a packed pixel back apart.
+ *
+ * These exist because `packRgba` above is the only thing that knows which byte
+ * is which, and anything that unpacks with its own shifts quietly disagrees with
+ * it on a big-endian machine — `>>> 24` is the alpha on one and the red on the
+ * other. `src/render/shareCard.ts` did exactly that, so its card would have been
+ * drawn from the wrong three channels and treated every pixel with no red as
+ * transparent. Measuring the order and then assuming it four lines later is the
+ * kind of bug that survives precisely because the assumption is right on every
+ * machine anyone tests on.
+ */
+export const redOf = (packed: number): number => (LITTLE_ENDIAN ? packed & 0xff : packed >>> 24) & 0xff;
+export const greenOf = (packed: number): number => (packed >>> (LITTLE_ENDIAN ? 8 : 16)) & 0xff;
+export const blueOf = (packed: number): number => (packed >>> (LITTLE_ENDIAN ? 16 : 8)) & 0xff;
+export const alphaOf = (packed: number): number => (LITTLE_ENDIAN ? packed >>> 24 : packed) & 0xff;
+
+/** True for a pixel that would draw nothing. */
+export const isTransparent = (packed: number): boolean => alphaOf(packed) === 0;
+
 export interface Rgb {
   readonly r: number;
   readonly g: number;

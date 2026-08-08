@@ -8,6 +8,14 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { keyToStep, pixelAt, samePixel, type Pixel } from "../core/pixel.ts";
+import { PixelText } from "./PixelText.tsx";
+
+/**
+ * The gutter the left-hand ruler occupies, matching `--u3` in tokens.css. The
+ * scale has to be worked out from the width the artwork actually gets, not the
+ * width of the frame, or the canvas is one step too large and overflows.
+ */
+const RULER = 24;
 
 export interface CanvasPick {
   /** The cell in the URL. Drawn as the strong marker. */
@@ -42,8 +50,8 @@ export function CanvasView({ image, size, label, maxScale = 8, pick }: CanvasVie
     if (frame === null) return;
 
     const measure = (): void => {
-      const width = frame.clientWidth;
-      if (width === 0) return;
+      const width = frame.clientWidth - RULER;
+      if (width <= 0) return;
       const byWidth = Math.floor(width / size);
       const byHeight = Math.floor((window.innerHeight * 0.72) / size);
       const next = Math.max(1, Math.min(maxScale, byWidth, byHeight));
@@ -146,9 +154,45 @@ export function CanvasView({ image, size, label, maxScale = 8, pick }: CanvasVie
 
   const interactive = pick !== undefined && image !== null;
 
+  // Every 16 cells, which divides both canvas sizes and lands on 8 ticks across
+  // a 144 day and 16 across a 256 — enough to find a coordinate by, few enough
+  // that the markings stay quieter than the artwork.
+  const ticks: number[] = [];
+  for (let cell = 0; cell < size; cell += 16) ticks.push(cell);
+
+  // At 1× a 16-cell step is 16 pixels, which is narrower than the number that
+  // would sit in it — the labels ran into each other and the ruler became
+  // texture. The marks stay at every scale, because they still show the grid;
+  // the numbers appear only where there is room to read one.
+  const numbered = 16 * scale >= 24;
+
   return (
     <div className="canvas-frame" ref={frameRef}>
-      <div
+      {/* The plate: rulers along the top and left edges, the artwork in the
+          corner they meet. A coordinate is read off the instrument rather than
+          printed underneath it in a sentence.
+
+          Grid, not absolute positioning, so a tick cannot drift out of register
+          with the cell it names — which would be worse than having no ruler.
+          aria-hidden: the position is already spoken by the core sample
+          heading, and a screen reader has no use for sixteen loose numbers. */}
+      <div className="canvas-plate">
+        <span className="ruler-corner" aria-hidden="true" />
+        <div className="ruler ruler-x" style={{ width: side }} aria-hidden="true">
+          {ticks.map((cell) => (
+            <span className="tick" key={cell} style={{ left: `${cell * scale}px` }}>
+              {numbered ? cell : ""}
+            </span>
+          ))}
+        </div>
+        <div className="ruler ruler-y" style={{ height: side }} aria-hidden="true">
+          {ticks.map((cell) => (
+            <span className="tick" key={cell} style={{ top: `${cell * scale}px` }}>
+              {numbered ? cell : ""}
+            </span>
+          ))}
+        </div>
+        <div
         className={interactive ? "canvas-stage canvas-stage-pick" : "canvas-stage"}
         style={{ width: side, height: side }}
         onPointerMove={interactive ? onPointerMove : undefined}
@@ -187,9 +231,11 @@ export function CanvasView({ image, size, label, maxScale = 8, pick }: CanvasVie
             <span className="cell-marker cell-marker-selected" style={marker(pick.selected)} aria-hidden="true" />
           </>
         )}
+        </div>
       </div>
-      <p className="canvas-scale" aria-hidden="true">
-        {size}&times;{size} at {scale}&times;
+      {/* The magnification, stated the way a microscope states it. */}
+      <p className="canvas-scale">
+        <PixelText scale={2}>{`${size}×${size} at ${scale}×`}</PixelText>
       </p>
     </div>
   );

@@ -61,6 +61,28 @@ describe("decodeStroke", () => {
     expect(() => decodeStroke("0x5a2bzz", () => {})).toThrow(MalformedStrokeError);
   });
 
+  /**
+   * `parseInt` stops at the first character it cannot read and returns what it
+   * had, so `parseInt("0z", 16)` is 0 rather than NaN. Checking the parsed
+   * values for NaN therefore only catches a bad character in the high nibble of
+   * a byte; one in the low nibble used to decode silently — `0x5a2b0z` became a
+   * real pixel at (90, 43) in palette slot 0 and went onto the canvas.
+   */
+  it("refuses a bad character in either nibble, not just the first", () => {
+    for (const data of ["0x5a2b0z", "0x5a2bz0", "0x0g2b03", "0xz00000", "0x5a2b03ff00g0"]) {
+      expect(() => decodeStroke(data, () => {})).toThrow(MalformedStrokeError);
+    }
+  });
+
+  it("does not let a malformed stroke put pixels on the canvas", () => {
+    const seen: number[][] = [];
+    expect(() =>
+      decodeStroke("0x5a2b03ffee010z0000", (x, y, c) => seen.push([x, y, c])),
+    ).toThrow(MalformedStrokeError);
+    // Nothing at all, not "the two good pixels before the bad one".
+    expect(seen).toEqual([]);
+  });
+
   it("agrees with strokePixelCount", () => {
     for (const stroke of fixture.strokes.items) {
       expect(strokePixelCount(stroke.data)).toBe(stroke.pixels);

@@ -12,7 +12,14 @@
 
 import type { Layers } from "../core/replay.ts";
 import { drawText, fillRect, fitText, textWidth, type Surface } from "./pixelFont.ts";
-import { TRANSPARENT, packRgba } from "./palette.ts";
+import {
+  TRANSPARENT,
+  blueOf,
+  greenOf,
+  isTransparent,
+  packRgba,
+  redOf,
+} from "./palette.ts";
 
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;
@@ -121,7 +128,7 @@ function blit(surface: Surface, panel: CardPanel, boxX: number, boxY: number): v
       const color = pixels[y * size + x];
       // Ghost mode leaves most of the canvas empty; empty means the ground
       // shows through, not that a black square gets drawn.
-      if (color === TRANSPARENT || (color >>> 24) === 0) continue;
+      if (color === TRANSPARENT || isTransparent(color)) continue;
       fillRect(surface, offsetX + x * scale, offsetY + y * scale, scale, scale, color);
     }
   }
@@ -151,10 +158,10 @@ export function asGround(pixels: Uint32Array, strength = 0.45): Uint32Array {
   const out = new Uint32Array(pixels.length);
   for (let i = 0; i < pixels.length; i++) {
     const color = pixels[i];
-    if ((color >>> 24) === 0) continue;
-    const r = color & 0xff;
-    const g = (color >>> 8) & 0xff;
-    const b = (color >>> 16) & 0xff;
+    if (isTransparent(color)) continue;
+    const r = redOf(color);
+    const g = greenOf(color);
+    const b = blueOf(color);
     const lum = (0.299 * r + 0.587 * g + 0.114 * b) * strength;
     // Tinted towards the same blue the page background sits at.
     out[i] = packRgba(Math.round(lum * 0.55), Math.round(lum * 0.68), Math.round(lum * 0.95), 255);
@@ -166,7 +173,7 @@ export function asGround(pixels: Uint32Array, strength = 0.45): Uint32Array {
 export function over(base: Uint32Array, top: Uint32Array): Uint32Array {
   const out = base.slice();
   for (let i = 0; i < top.length && i < out.length; i++) {
-    if ((top[i] >>> 24) !== 0) out[i] = top[i];
+    if (!isTransparent(top[i])) out[i] = top[i];
   }
   return out;
 }

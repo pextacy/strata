@@ -16,9 +16,22 @@ export function strokePixelCount(data: string): number {
 }
 
 /**
+ * Every character has to be a hex digit, checked before anything is read.
+ *
+ * `parseInt` cannot be trusted to notice on its own: it stops at the first
+ * character it does not understand and returns what it had, so `parseInt("0z",
+ * 16)` is 0, not NaN. A NaN check therefore catches a bad character in the high
+ * nibble of a byte and misses one in the low nibble — `5a2bz0` throws, `5a2b0z`
+ * silently decodes as palette index 0 and lands on the canvas as a real pixel.
+ * One wrong pixel accepted quietly is worse than a whole stroke rejected loudly:
+ * the claim this project makes is that its replay *is* the canvas.
+ */
+const HEX_ONLY = /^[0-9a-fA-F]*$/;
+
+/**
  * Calls `out` once per pixel and returns the pixel count. Throws on a length
- * that is not a whole number of pixels; a caller replaying a day counts those
- * rather than abandoning the day.
+ * that is not a whole number of pixels, or on a character that is not hex; a
+ * caller replaying a day counts those rather than abandoning the day.
  */
 export function decodeStroke(
   data: string,
@@ -30,16 +43,17 @@ export function decodeStroke(
       `stroke data is ${hex.length} hex characters, not a whole number of 3-byte pixels`,
     );
   }
+  if (!HEX_ONLY.test(hex)) {
+    throw new MalformedStrokeError("stroke data has a character that is not a hex digit");
+  }
   const count = hex.length / 6;
   for (let i = 0; i < count; i++) {
     const at = i * 6;
-    const x = parseInt(hex.slice(at, at + 2), 16);
-    const y = parseInt(hex.slice(at + 2, at + 4), 16);
-    const color = parseInt(hex.slice(at + 4, at + 6), 16);
-    if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(color)) {
-      throw new MalformedStrokeError(`stroke data has a non-hex character at pixel ${i}`);
-    }
-    out(x, y, color);
+    out(
+      parseInt(hex.slice(at, at + 2), 16),
+      parseInt(hex.slice(at + 2, at + 4), 16),
+      parseInt(hex.slice(at + 4, at + 6), 16),
+    );
   }
   return count;
 }

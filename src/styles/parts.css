@@ -14,8 +14,7 @@
   justify-content: center;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1rem;
+  padding: var(--u2);
   min-height: 12rem;
 }
 
@@ -24,11 +23,74 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--u2);
 }
 
 .canvas-frame-empty {
   justify-content: center;
+}
+
+/* The plate: rulers along the top and left, the artwork in the corner they
+   meet. A grid, so a tick can never drift out of register with the cell it
+   names — the whole point of a ruler is that it is trustworthy. */
+.canvas-plate {
+  display: grid;
+  grid-template-columns: var(--u3) auto;
+  grid-template-rows: var(--u3) auto;
+}
+
+.ruler-corner {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.ruler {
+  position: relative;
+  color: var(--rule);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ruler-x {
+  grid-column: 2;
+  grid-row: 1;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ruler-y {
+  grid-column: 1;
+  grid-row: 2;
+  border-right: 1px solid var(--rule);
+}
+
+/* The artwork sits in the corner the two rulers meet. Stated here, with the
+   grid it belongs to, rather than next to the stage's own styles. */
+.canvas-plate .canvas-stage {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Each tick is a hairline at the cell boundary with its number beside it. The
+   line is the measurement; the number only names it. */
+.tick {
+  position: absolute;
+}
+
+.ruler-x .tick {
+  bottom: 0;
+  padding-left: 3px;
+  border-left: 1px solid var(--rule);
+  height: var(--u);
+}
+
+.ruler-y .tick {
+  right: 0;
+  padding-right: 3px;
+  border-top: 1px solid var(--rule);
+  text-align: right;
+  min-width: var(--u3);
 }
 
 .canvas-art {
@@ -40,9 +102,22 @@
 
 .canvas-scale {
   margin: 0;
-  font-size: var(--step--1);
   color: var(--muted);
-  letter-spacing: 0.06em;
+}
+
+/* --- the instrument's own face -------------------------------------------- */
+
+/* Drawn by src/render/pixelFont.ts, the same 5×7 bitmap that draws the share
+   cards. The real text is in the DOM beside it and only the picture is hidden,
+   so these numbers still copy, still find with ctrl-F, and still read aloud. */
+.pixel-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pixel-text-canvas {
+  display: block;
+  image-rendering: pixelated;
 }
 
 /* --- progress ------------------------------------------------------------- */
@@ -94,10 +169,12 @@
   gap: 0.4rem;
 }
 
+/* A hard 2px offset instead of a blurred shadow: the raised edge of a physical
+   key, drawn the way a 1-bit interface has to draw it. Pressing moves the
+   button onto its own shadow rather than animating anything. */
 .mode-button {
-  padding: 0.35rem 0.9rem;
+  padding: var(--u) var(--u2);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
   background: transparent;
   color: var(--fg);
   cursor: pointer;
@@ -106,17 +183,32 @@
 
 .mode-button:hover:not(:disabled) {
   border-color: var(--accent);
+  box-shadow: 2px 2px 0 0 var(--accent);
+  transform: translate(-2px, -2px);
 }
 
+/* The active mode is an inverted block, not a tinted one. Which lens you are
+   looking through is the single most consequential thing on this page. */
 .mode-button[aria-pressed="true"] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--bg);
+  box-shadow: none;
+  transform: none;
 }
 
 .mode-button:disabled {
-  opacity: 0.45;
   cursor: default;
+  color: var(--muted);
+  --dither-ink: var(--bg-sunken);
+  background-image: repeating-conic-gradient(var(--dither-ink) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-button:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 .mode-blurb {
@@ -160,8 +252,8 @@
 }
 
 .legend-swatch {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: var(--u2);
+  height: var(--u2);
   border: 1px solid var(--line);
 }
 
@@ -175,7 +267,7 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 1rem;
+  gap: var(--u3);
   margin: 0;
   padding: 0;
   border: 0;
@@ -211,9 +303,9 @@
 
 .notice {
   margin: 0;
-  padding: 0.75rem 1rem;
+  padding: var(--u2);
   background: var(--bg-raised);
-  border-left: 3px solid var(--accent);
+  border-left: var(--u) solid var(--accent);
   max-width: 34rem;
 }
 

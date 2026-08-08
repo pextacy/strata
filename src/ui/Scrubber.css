@@ -16,11 +16,10 @@
 .scrubber-play {
   grid-area: play;
   align-self: start;
-  min-width: 5rem;
-  height: 3.5rem;
-  padding-inline: 0.9rem;
+  min-width: var(--u6);
+  height: var(--u6);
+  padding-inline: var(--u2);
   border: 0;
-  border-radius: var(--radius);
   background: var(--accent);
   color: var(--bg);
   cursor: pointer;
@@ -35,14 +34,13 @@
 .scrubber-track {
   grid-area: track;
   position: relative;
-  height: 3.5rem;
+  height: var(--u6);
 }
 
 .scrubber-band {
   position: absolute;
   inset: 0;
   background: var(--bg-sunken);
-  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -67,9 +65,17 @@
   background: var(--line);
 }
 
+/* The part of the day that has not been reached is dithered, not faded. Opacity
+   would wash the bars towards the background and make a quiet hour look like a
+   missing one; a checkerboard keeps every bar at full strength and still reads
+   as "not yet". */
+.scrubber-bars:not(.is-played) .scrubber-bar {
+  background-image: repeating-conic-gradient(var(--bg-sunken) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
+
 .scrubber-bars.is-played .scrubber-bar {
   background: var(--accent);
-  opacity: 0.75;
 }
 
 .scrubber-range {
@@ -104,7 +110,7 @@
   appearance: none;
   -webkit-appearance: none;
   width: 17px;
-  height: 3.5rem;
+  height: var(--u6);
   border: 6px solid transparent;
   background: var(--fg);
   background-clip: content-box;
@@ -113,7 +119,7 @@
 
 .scrubber-range::-moz-range-thumb {
   width: 17px;
-  height: 3.5rem;
+  height: var(--u6);
   border: 6px solid transparent;
   background: var(--fg);
   background-clip: content-box;
@@ -155,6 +161,12 @@
   opacity: 0.5;
 }
 
+/* The playhead is the one thing here that must be findable at a glance, so it
+   gets a hard accent seat rather than sharing the track's grey. */
+.scrubber-track:focus-within .scrubber-band {
+  outline: 1px solid var(--rule);
+}
+
 @media (max-width: 30rem) {
   .scrubber {
     grid-template-columns: minmax(0, 1fr);
@@ -167,6 +179,6 @@
 
   .scrubber-play {
     justify-self: start;
-    height: 2.5rem;
+    height: var(--u4);
   }
 }

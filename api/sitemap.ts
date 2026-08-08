@@ -15,7 +15,8 @@ import { currentDay, dayEnd } from "../src/core/day-math.ts";
 import { publicOrigin } from "./_lib/origin.ts";
 import { assetHeaders } from "./_lib/security.ts";
 
-export const config = { runtime: "nodejs" };
+// Pure string building, no network. It either answers at once or never.
+export const config = { runtime: "nodejs", maxDuration: 10 };
 
 /**
  * The sitemap protocol's ceiling is 50,000 URLs in one file. BasePaint gains one

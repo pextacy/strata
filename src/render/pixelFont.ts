@@ -77,6 +77,10 @@ const FOLD: Record<string, string> = {
   Ñ: "N", Ò: "O", Ó: "O", Ô: "O", Õ: "O", Ö: "O", Ø: "O",
   Ù: "U", Ú: "U", Û: "U", Ü: "U", Ý: "Y", ß: "SS",
   "—": "-", "–": "-", "‘": "'", "’": "'", "“": "'", "”": "'", "…": "...",
+  // A multiplication sign is the one piece of punctuation this project writes
+  // constantly — "256×256", "at 4×" — and without this it was silently dropped,
+  // which turns a scale readout into a bare number.
+  "×": "X",
 };
 
 /** The text as this font can actually draw it. Unknown characters are dropped. */

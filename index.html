@@ -14,6 +14,13 @@
          strips these and writes the title, description and card for the day or
          artist being asked for. They are what shows in the dev server, and what
          would show if that function ever failed to rewrite them. -->
+    <!-- This file is also reachable on its own at /index.html, because that is
+         where api/html.ts fetches its shell from and the route has to exist for
+         it. Asked for directly it is a second copy of the homepage carrying no
+         canonical link and a relative card URL, so it says not to keep it.
+         api/html.ts strips this tag along with the rest — a real page gets the
+         robots tag its own status decides, and there is a test for it. -->
+    <meta name="robots" content="noindex" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Strata" />
     <meta property="og:title" content="Strata — what is buried in a BasePaint canvas" />

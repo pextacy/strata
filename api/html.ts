@@ -9,10 +9,17 @@
 import { checksumAddress } from "../src/data/address.ts";
 import { currentDay } from "../src/core/day-math.ts";
 import { fetchTheme } from "../src/data/theme.ts";
+import { CARD_VERSION } from "./_lib/cardVersion.ts";
 import { assetOrigin, publicOrigin } from "./_lib/origin.ts";
 import { assetHeaders, documentHeaders } from "./_lib/security.ts";
 
-export const config = { runtime: "nodejs" };
+/**
+ * This one fetches its own shell and, for a day route, one theme name — both
+ * small and both on short clocks (5 s for the shell, one attempt for the theme).
+ * It has no reason to live as long as the card function does, and a page that
+ * cannot be built quickly is better answered than waited on.
+ */
+export const config = { runtime: "nodejs", maxDuration: 20 };
 
 const SITE = "Strata";
 const TAGLINE =
@@ -32,6 +39,19 @@ export interface Meta {
    * screen; this makes the status agree with the sentence.
    */
   readonly status: number;
+  /**
+   * The one spelling of this page's URL, which is what the canonical link and
+   * `og:url` name — never the path as it was asked for.
+   *
+   * An address has three spellings that all reach the same artist, and the app
+   * itself rewrites the address bar to the checksummed one; a day answers with
+   * and without a trailing slash. Echoing the request back made every one of
+   * those its own canonical URL, so a crawler was told that three URLs were
+   * three pages, and the one the SPA actually settles on was named by none of
+   * them. `metaFor` has already worked out the real spelling to build the title
+   * and the card from — this is that same answer, kept rather than discarded.
+   */
+  readonly path: string;
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -59,7 +79,7 @@ export default async function handler(request: Request): Promise<Response> {
     );
   }
 
-  const html = injectMeta(shell, meta, publicOrigin(url), url.pathname);
+  const html = injectMeta(shell, meta, publicOrigin(url));
 
   return new Response(html, {
     status: meta.status,
@@ -87,11 +107,13 @@ export async function metaFor(pathname: string): Promise<Meta> {
       description: settled
         ? `Day ${day} of BasePaint, replayed from the chain: what survived, what is buried under it, and who painted which pixel.`
         : `Day ${day} of BasePaint is being painted right now. Watch the layers stack up, stroke by stroke.`,
-      card: `day=${day}`,
+      card: `day=${day}&v=${CARD_VERSION}`,
       cacheControl: settled
         ? "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
         : "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
       status: 200,
+      // The number, not the digits that were typed: `/day/0500/` is this page too.
+      path: `/day/${day}`,
     };
   }
 
@@ -100,9 +122,12 @@ export async function metaFor(pathname: string): Promise<Meta> {
     return {
       title: `${shorten(address)} — ${SITE}`,
       description: `How much of what ${shorten(address)} painted on BasePaint is still on the canvas, who covered them, and who they covered.`,
-      card: `address=${address}`,
+      card: `address=${address}&v=${CARD_VERSION}`,
       cacheControl: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
       status: 200,
+      // Checksummed, which is the spelling `Artist.tsx` rewrites the address bar
+      // to and the only one the indexer answers to.
+      path: `/artist/${address}`,
     };
   }
 
@@ -110,9 +135,10 @@ export async function metaFor(pathname: string): Promise<Meta> {
     return {
       title: `${SITE} — what is buried in a BasePaint canvas`,
       description: `${TAGLINE} Strata replays the on-chain strokes and digs out the rest.`,
-      card: `day=${currentDay()}`,
+      card: `day=${currentDay()}&v=${CARD_VERSION}`,
       cacheControl: "public, max-age=0, s-maxage=300, stale-while-revalidate=3600",
       status: 200,
+      path: "/",
     };
   }
 
@@ -126,6 +152,9 @@ export async function metaFor(pathname: string): Promise<Meta> {
     card: null,
     cacheControl: "public, max-age=0, s-maxage=60",
     status: 404,
+    // Nothing to normalise a wrong URL to. It goes out `noindex` anyway, so the
+    // canonical is only ever read as "this is where you are".
+    path: pathname === "" ? "/" : pathname,
   };
 }
 
@@ -167,15 +196,28 @@ async function themeName(day: number): Promise<string | null> {
  * into this function.
  */
 async function loadShell(url: URL): Promise<string> {
+  // On a clock, like every other fetch here. This one is same-deployment and
+  // should answer in milliseconds; without a deadline a stall holds the function
+  // open until the platform kills it, and the person gets a platform error page
+  // instead of the sentence below. Short, because there is a real answer waiting
+  // on the other side of giving up.
   const res = await fetch(new URL("/index.html", assetOrigin(url)), {
     headers: { "user-agent": "strata-html-shell" },
+    signal: AbortSignal.timeout(SHELL_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`the built shell answered ${res.status}`);
   return await res.text();
 }
 
-export function injectMeta(shell: string, meta: Meta, origin: string, pathname: string): string {
-  const canonical = `${origin}${pathname}`;
+const SHELL_TIMEOUT_MS = 5_000;
+
+/**
+ * The path is deliberately not a parameter: it comes from `meta`, which is the
+ * only thing that knows the canonical spelling of the page. Taking it separately
+ * is what let the request's own path be canonicalised by mistake.
+ */
+export function injectMeta(shell: string, meta: Meta, origin: string): string {
+  const canonical = `${origin}${meta.path}`;
   const image = meta.card === null ? null : `${origin}/api/og?${meta.card}`;
 
   const tags = [
@@ -207,10 +249,17 @@ export function injectMeta(shell: string, meta: Meta, origin: string, pathname: 
   // The shell ships with a full set of these already, for the routes Vercel
   // serves straight from disk. They are replaced rather than added to, so a
   // crawler never has two titles or two cards to choose between.
+  //
+  // `robots` is in the list because the shell carries `noindex` — it is reachable
+  // at `/index.html`, where it is a second copy of the homepage with no canonical
+  // and a relative card URL. Every page served through this function is a real
+  // page and gets the tag decided above instead: none at all when the route
+  // exists, `noindex` when it does not. Leaving the shell's tag in place would
+  // deindex the entire site.
   const stripped = shell
     .replace(/<title>[\s\S]*?<\/title>/i, "")
     .replace(
-      /<meta[^>]*(?:property="og:[^"]*"|name="twitter:[^"]*"|name="description")[^>]*>/gi,
+      /<meta[^>]*(?:property="og:[^"]*"|name="twitter:[^"]*"|name="description"|name="robots")[^>]*>/gi,
       "",
     );
 
