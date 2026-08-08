@@ -9,6 +9,7 @@ import { currentDay } from "../core/day-math.ts";
 import { BEACON_URL, basepaintUrl } from "../data/links.ts";
 import { isViewMode } from "../render/layers.ts";
 import { RouteErrorBoundary } from "./ErrorBoundary.tsx";
+import { PixelText } from "./PixelText.tsx";
 import "../styles/shell.css";
 
 const REPO_URL: string | undefined = import.meta.env.VITE_REPO_URL;
@@ -53,8 +54,14 @@ function SiteHeader() {
   return (
     <header className="site-head">
       <div className="site-head-inner">
-        <Link className="wordmark" to="/">
-          Strata
+        {/* The name, in the face the canvases and the share cards are drawn
+            with. This is the fifth use of the bitmap font and the budget in
+            CLAUDE.md says a fifth needs a reason: the reason is that a wordmark
+            is the one place a product is allowed to state its own identity, and
+            setting it in anything else would mean the logo, the cards and the
+            numbers were three different ideas. */}
+        <Link className="wordmark" to="/" aria-label="Strata, home">
+          <PixelText scale={4}>Strata</PixelText>
         </Link>
 
         <nav className="site-nav" aria-label="Days">

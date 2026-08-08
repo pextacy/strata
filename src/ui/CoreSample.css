@@ -121,10 +121,6 @@
   background: var(--line);
 }
 
-.core-band:first-child .core-leader {
-  background: var(--accent);
-}
-
 .core-note {
   grid-column: 3;
   display: flex;
@@ -180,7 +176,9 @@
 }
 
 /* The band actually on the canvas is the one the summary above calls "the one
-   you can see", so it is marked rather than left to be inferred from position. */
+   you can see", so it is marked rather than left to be inferred from position.
+   Marked once: the plug carries it, and the leader line stays the same grey as
+   every other. Three accent marks for one fact is two too many. */
 .core-band:first-child .core-plug {
   box-shadow: inset 0 0 0 2px var(--accent);
 }

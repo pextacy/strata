@@ -14,6 +14,7 @@ import { basepaintDayUrl } from "../data/links.ts";
 import { CanvasView } from "../ui/CanvasView.tsx";
 import { DepthLegend } from "../ui/DepthLegend.tsx";
 import { ModeSwitch } from "../ui/ModeSwitch.tsx";
+import { PixelText } from "../ui/PixelText.tsx";
 import { Scrubber } from "../ui/Scrubber.tsx";
 import { Section } from "../ui/Section.tsx";
 import { Stat } from "../ui/Stat.tsx";
@@ -96,10 +97,34 @@ export default function Home() {
     <Section
       head={
         <>
-          <p className="home-lede">
-            Every BasePaint canvas is a stack of paintings, and only the top one has ever been
-            visible. Strata replays the strokes and digs out the rest.
-          </p>
+          {/* The page's argument, as a number about today rather than a
+              sentence about canvases in general.
+
+              Every other landing page for a tool like this opens by explaining
+              itself. This one states the thing it exists because of: paint that
+              was put down today and is already gone. It is the same figure the
+              Ghost view draws, it is live, and it climbs while you read it —
+              which is the whole claim, made without a word of persuasion.
+
+              Until the day is replayed there is no number to stand behind, so
+              the sentence takes its place rather than a zero or a skeleton. */}
+          {data !== null && !empty && data.stats.buriedPlacements > 0 ? (
+            <p className="home-thesis">
+              <PixelText className="home-buried" scale={7}>
+                {count.format(data.stats.buriedPlacements)}
+              </PixelText>
+              <span className="home-thesis-line">
+                pixels have already been painted over today. The image BasePaint publishes
+                tonight will show none of them.
+              </span>
+            </p>
+          ) : (
+            <p className="home-lede">
+              {data !== null && !empty
+                ? "Nothing has been covered yet today. Every pixel placed so far is still on the canvas — watch it start to stack."
+                : "Every BasePaint canvas is a stack of paintings, and only the top one has ever been visible. Strata replays the strokes and digs out the rest."}
+            </p>
+          )}
           <h1 className="home-title">
             Day {day}
             {data !== null && <span className="home-theme">{data.theme.theme}</span>}

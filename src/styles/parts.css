@@ -118,6 +118,12 @@
 .pixel-text-canvas {
   display: block;
   image-rendering: pixelated;
+  /* A safety valve, not a layout tool. These are sized in whole pixels and are
+     meant to stay that way, but a number wide enough to overflow a narrow
+     screen would otherwise scroll the page sideways — which is the worse of the
+     two failures. The canvas keeps its aspect from its intrinsic size. */
+  max-width: 100%;
+  height: auto;
 }
 
 /* --- progress ------------------------------------------------------------- */

@@ -113,7 +113,9 @@ tests/
 - No default exports except React route components.
 - Comments explain why, not what. The decoder and the survival definition get a comment; a `useState` does not.
 - The interface is on the artwork's grid. Spacing comes from `--u` (8px) and its multiples, `--radius` is `0` and stays `0`, and nothing is dimmed with `opacity` — use the dither pattern, because fading a swatch lies about the colour of the paint. Rulers, plugs and ticks are drawn at whole-pixel sizes for the same reason the canvas is drawn at a whole scale.
-- Display numerals — the day number, the drilled coordinate, the survival rate, the scale readout — are set in the project's own 5×7 bitmap font through `ui/PixelText.tsx`, which is the same font `render/pixelFont.ts` draws the share cards with. It keeps the real text in the DOM and hides only the picture, so those numbers still copy, still find, and still read aloud. Everything else is Roboto Mono. Four uses is the whole budget; a fifth needs a reason.
+- Display numerals — the day number, the drilled coordinate, the survival rate, the scale readout — are set in the project's own 5×7 bitmap font through `ui/PixelText.tsx`, which is the same font `render/pixelFont.ts` draws the share cards with. It keeps the real text in the DOM and hides only the picture, so those numbers still copy, still find, and still read aloud. The wordmark is set in it too, because that is the one place a product states its own identity and it would be odd for the logo, the cards and the numbers to be three different ideas. Everything else is Roboto Mono. Those five are the whole budget; a sixth needs a reason.
+
+- The landing page leads with the number of placements already buried on today's canvas, not with an explanation of the product. It is the same figure Ghost draws, it is live, and it climbs while you read it. If that number is ever replaced with a sentence about what Strata does, the page has lost its argument.
 - Keep dependencies at the list above. Adding one requires deleting one.
 
 ## Definition of done for any task
