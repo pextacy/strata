@@ -1,0 +1,186 @@
+/* The artist page. Page chrome — crumb, stat grid, notices, footer — is shared
+   with the day view and comes from day.css; only what is new to this page is
+   here. The survival rate is the loudest thing on it, because it is the one
+   number nowhere else has. */
+
+.artist .artist-name {
+  font-size: var(--step-1);
+  overflow-wrap: anywhere;
+}
+
+.artist .artist-name .address {
+  color: var(--fg);
+}
+
+/* --- the headline number -------------------------------------------------- */
+
+.artist .survival {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.artist .survival-rate {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.survival-figure {
+  font-size: var(--step-3);
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.survival-caption {
+  color: var(--fg);
+  max-width: 22rem;
+}
+
+.artist .survival-scope {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+  max-width: 46rem;
+}
+
+/* --- who painted over whom ------------------------------------------------ */
+
+.rivals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+}
+
+.artist .rival h2 {
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  cursor: help;
+  margin-bottom: 0.5rem;
+}
+
+.rival-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rival-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rival-times {
+  color: var(--muted);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.artist .rival-empty,
+.artist .rival-rest {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* --- day by day ----------------------------------------------------------- */
+
+.day-table {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+/* Six columns will not fit a phone, so the table scrolls inside its own box
+   rather than pushing the page sideways. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.artist table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+
+.artist th,
+.artist td {
+  padding: 0.45rem 0.75rem 0.45rem 0;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.artist thead th {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.artist tbody th {
+  font-weight: 400;
+}
+
+.artist .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.artist .theme-cell {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+/* --- indexer totals ------------------------------------------------------- */
+
+.indexer-totals {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.artist .indexer-totals h2 {
+  font-size: var(--step-0);
+}
+
+.artist .indexer-note,
+.artist .indexer-last {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+  max-width: 46rem;
+}
+
+.gap-list {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+}
+
+@media (max-width: 30rem) {
+  .survival-figure {
+    font-size: var(--step-2);
+  }
+
+  .artist .survival {
+    padding: 0.9rem;
+  }
+}
