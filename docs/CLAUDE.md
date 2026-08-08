@@ -10,7 +10,7 @@ Live data only. Every number on screen is derived from the BasePaint indexer or 
 
 ## Stack
 
-- Vite 5 + React 18 + TypeScript (strict)
+- Vite 8 + React 19 + TypeScript 6 (strict) — whatever `npm create vite@latest` scaffolds
 - React Router (browser router, no hash routing)
 - Canvas 2D + `ImageData`, replay work in a Web Worker
 - `viem` for ENS lookups and for the mint transaction
@@ -25,7 +25,7 @@ npm install
 npm run introspect     # writes src/data/schema.json from the live GraphQL endpoint
 npm run dev            # vite dev server on :5173
 npm run typecheck      # tsc --noEmit
-npm run lint           # eslint
+npm run lint           # oxlint, what the Vite template now ships
 npm run verify -- 500  # replays day 500 in node and diffs against the official PNG
 npm run test           # vitest, runs the decoder + replay tests
 npm run build          # tsc --noEmit && vite build
