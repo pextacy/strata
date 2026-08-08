@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "introspect": "node scripts/introspect.mjs",
     "verify": "node scripts/verify.mjs",
+    "live": "node scripts/live.mjs",
     "capture": "node scripts/capture-fixture.mjs"
   },
   "dependencies": {
