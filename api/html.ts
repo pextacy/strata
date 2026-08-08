@@ -6,11 +6,13 @@
 // It never invents a fact. The only value it fetches is the day's theme name,
 // and when that call fails the tags fall back to the day number alone.
 
+import { readFile } from "node:fs/promises";
+
 import { checksumAddress } from "../src/data/address.js";
 import { currentDay } from "../src/core/day-math.js";
 import { fetchTheme } from "../src/data/theme.js";
 import { CARD_VERSION } from "./_lib/cardVersion.js";
-import { assetOrigin, publicOrigin } from "./_lib/origin.js";
+import { assetOrigin, isLocalDeployment, publicOrigin } from "./_lib/origin.js";
 import { assetHeaders, documentHeaders } from "./_lib/security.js";
 
 /**
@@ -202,28 +204,57 @@ async function themeName(day: number): Promise<string | null> {
 }
 
 /**
- * The built `index.html`, which Vercel serves as a static file — rewrites only
- * apply to paths that do not match one, so asking for it here cannot loop back
- * into this function.
+ * The built `index.html`, read off the disk this function is running from.
+ *
+ * It used to be fetched over HTTP from the deployment's own URL, and that was
+ * wrong in a way that only production could show. With Deployment Protection
+ * on — which is the default — that URL answers 302 to Vercel's SSO login,
+ * `fetch` follows the redirect, gets a perfectly good 200 back, and this
+ * function serves Vercel's login page as Strata's HTML. Every page rendered
+ * blank. Nothing threw and nothing was logged, because at every step something
+ * had legitimately succeeded.
+ *
+ * The shell is a build artifact of this very deployment. There was never a
+ * reason to ask the network for it: reading it from disk costs no round trip,
+ * cannot be redirected, cannot be protected, and cannot be pointed anywhere
+ * else by anybody. `vercel.json` includes the file in this function's bundle.
  */
 async function loadShell(url: URL): Promise<string> {
-  // On a clock, like every other fetch here. This one is same-deployment and
-  // should answer in milliseconds; without a deadline a stall holds the function
-  // open until the platform kills it, and the person gets a platform error page
-  // instead of the sentence below. Short, because there is a real answer waiting
-  // on the other side of giving up.
+  // Under `vercel dev` the shell has to come from the dev server: Vite never
+  // writes `dist/`, and a stale one left over from an earlier build is the
+  // wrong shell, because the dev server's script URLs are the source files
+  // rather than the hashed bundle. Localhost is neither protected nor
+  // redirected, so the fetch is safe exactly where it is needed.
+  if (isLocalDeployment()) return await fetchShell(url, null);
+
+  const onDisk = new URL("../dist/index.html", import.meta.url);
+  try {
+    return await readFile(onDisk, "utf8");
+  } catch (error) {
+    // On a deployment, reaching this means the build did not put the file where
+    // `vercel.json` says it will be. Try the network rather than fail outright,
+    // but under the rules in `fetchShell` — never following a redirect.
+    return await fetchShell(url, error);
+  }
+}
+
+async function fetchShell(url: URL, missing: unknown): Promise<string> {
   const shell = new URL("/index.html", assetOrigin(url));
   let res: Response;
   try {
     res = await fetch(shell, {
       headers: { "user-agent": "strata-html-shell" },
+      // Never follow one. A redirect here is not the shell moving — it is
+      // something standing in front of it, and the last time this followed one
+      // it served the page it landed on as though it were ours.
+      redirect: "manual",
       signal: AbortSignal.timeout(SHELL_TIMEOUT_MS),
     });
   } catch (error) {
-    // Name the address that could not be reached. Which origin this resolved to
-    // is the one fact worth having, and it is exactly what a bare "fetch failed"
-    // withholds.
-    throw new Error(`${shell.href} could not be reached`, { cause: error });
+    throw new Error(`${shell.href} could not be reached`, { cause: error ?? missing });
+  }
+  if (res.status >= 300 && res.status < 400) {
+    throw new Error(`${shell.href} redirected to ${res.headers.get("location") ?? "somewhere"}`);
   }
   if (!res.ok) throw new Error(`${shell.href} answered ${res.status}`);
   return await res.text();

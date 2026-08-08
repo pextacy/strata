@@ -297,9 +297,15 @@ describe("the handler, asked by a caller claiming to be somewhere else", () => {
     return await handler(new Request(`https://${host}${path}`));
   };
 
-  it("fetches its shell from this deployment, never from the caller's host", async () => {
+  it("reads its shell off disk and asks the network for it at all", async () => {
+    // It used to fetch the shell over HTTP from the deployment's own URL. With
+    // Deployment Protection on, that URL answers 302 to an SSO login, fetch
+    // followed it, and this function served Vercel's login page as Strata's
+    // HTML — every page blank, nothing thrown, nothing logged. The shell is a
+    // build artifact of this deployment and now comes from the filesystem, so
+    // there is no request to redirect and no host to get wrong.
     await ask("evil.example", "/day/500");
-    expect(fetched).toContain("https://strata-deploy-abc123.vercel.app/index.html");
+    expect(fetched.some((url) => url.endsWith("/index.html"))).toBe(false);
     expect(fetched.some((url) => url.includes("evil.example"))).toBe(false);
   });
 
@@ -326,14 +332,7 @@ describe("the handler, asked by a caller claiming to be somewhere else", () => {
     expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
   });
 
-  it("answers 503 in words when its own shell cannot be fetched", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
-    vi.stubEnv("VERCEL_URL", "strata-deploy-abc123.vercel.app");
-    const response = await handler(new Request("https://strata.example/day/500"));
-    expect(response.status).toBe(503);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.text()).toContain("problem at our end");
-  });
+
 });
 
 const count = (text: string, pattern: RegExp): number => (text.match(pattern) ?? []).length;

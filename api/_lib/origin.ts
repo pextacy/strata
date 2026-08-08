@@ -28,6 +28,20 @@ const LOOPBACK = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
 const asOrigin = (host: string): string => `${LOOPBACK.test(host) ? "http" : "https"}://${host}`;
 
 /**
+ * True under `vercel dev`, false on any deployment.
+ *
+ * The two differ in where the page shell lives. A deployment has the built
+ * `dist/index.html` on disk beside the function. `vercel dev` serves the app
+ * from Vite and never writes `dist/` at all — and if a stale one is lying
+ * around from an earlier build it is the wrong shell, because the dev server's
+ * script URLs are the source files, not the hashed bundle.
+ */
+export function isLocalDeployment(): boolean {
+  const host = fromEnv("VERCEL_URL");
+  return host !== null && LOOPBACK.test(host);
+}
+
+/**
  * Where to fetch this deployment's own files from.
  *
  * `api/html.ts` fetches the built shell and then serves it as this site's HTML.
