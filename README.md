@@ -6,7 +6,7 @@ A BasePaint canvas is painted by hundreds of people over 24 hours, and pixels ge
 
 ![The ghost layer of day 500 — only the pixels that were painted and later covered, in the colour that was lost — with the core sample open on the day's most contested cell](docs/media/strata-day-500-ghost.png)
 
-*`/day/500?mode=ghost&px=236,56`. On the left, the ghost layer: everything that survived has been dropped out, so what is left is only paint that somebody else covered over. On the right, the core sample of cell (236,56) — nineteen layers deep, four painters, read bottom to top.*
+*`/day/500?mode=ghost&px=236,56`. On the left, the ghost layer: everything that survived has been dropped out, so what is left is only paint that somebody else covered over. On the right, the core sample of cell (236,56) — the deepest on the canvas, nineteen layers by four painters, read downward from the colour on the surface.*
 
 ## What it does
 

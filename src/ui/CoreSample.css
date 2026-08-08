@@ -63,8 +63,10 @@
 
 .core-stack {
   display: flex;
-  /* Chronological in the DOM, reversed on screen: oldest at the bottom. */
-  flex-direction: column-reverse;
+  /* Newest first, matching the DOM. A `column-reverse` container pins its scroll
+     to the first child, which on a deep cell meant opening on the oldest bands
+     and clipping the one still on the canvas. */
+  flex-direction: column;
   gap: 1px;
   margin: 0;
   padding: 0;

@@ -85,11 +85,19 @@ export function CoreSample({
                   : `${buried} ${buried === 1 ? "layer is" : "layers are"} buried under the one you can see.`}
               </p>
 
-              {/* Chronological in the DOM — a screen reader reads the day
-                  forwards — and reversed visually, so the oldest sits at the
-                  bottom like a real core. */}
+              {/* Newest first, in the DOM and on screen alike, so the oldest
+                  still sits at the bottom like a real core.
+
+                  This list was chronological in the DOM and flipped with
+                  `column-reverse`, which reads well until the stack is taller
+                  than its scroll box: a reversed flex container pins to its
+                  first child, so a nineteen-band cell opened on the oldest
+                  eight and hid the band actually on the canvas — the one the
+                  summary directly above calls "the one you can see". Reading
+                  down from the surface also puts keyboard focus in the order
+                  the eye moves. */}
               <ol className="core-stack">
-                {bands.map((band, index) => (
+                {bands.toReversed().map((band, index) => (
                   <li
                     key={band.index}
                     className={band.buried ? "core-band core-band-buried" : "core-band"}
@@ -111,8 +119,10 @@ export function CoreSample({
                         {band === top ? " · on top" : band.buried ? " · buried" : " · repainted"}
                       </span>
                     </span>
+                    {/* Depth, counted from the bottom of the core: band 1 is the
+                        first colour ever laid here, whichever end you read from. */}
                     <span className="core-band-index" aria-hidden="true">
-                      {index + 1}
+                      {bands.length - index}
                     </span>
                   </li>
                 ))}
