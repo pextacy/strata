@@ -112,14 +112,15 @@ export async function fetchStrokePage(
   canvasId: number,
   cursor: string | null,
   afterId: bigint | null,
-  options: GqlOptions = {},
+  options: StrokeFetchOptions = {},
 ): Promise<StrokePageResult> {
+  const { limit = PAGE_LIMIT, ...gqlOptions } = options;
   const data = await gql<StrokePage>(
     afterId === null ? DAY_STROKES : DAY_STROKES_AFTER_ID,
     afterId === null
-      ? { canvasId, after: cursor, limit: PAGE_LIMIT }
-      : { canvasId, afterId: afterId.toString(), after: cursor, limit: PAGE_LIMIT },
-    options,
+      ? { canvasId, after: cursor, limit }
+      : { canvasId, afterId: afterId.toString(), after: cursor, limit },
+    gqlOptions,
   );
   const page = data.strokes;
   return {
@@ -128,6 +129,13 @@ export async function fetchStrokePage(
     endCursor: page.pageInfo.endCursor,
     totalCount: page.totalCount,
   };
+}
+
+export interface StrokeFetchOptions extends GqlOptions {
+  /** Strokes per request. Capped at 1000 by the indexer; lower only in tests,
+      where it is the one way to exercise the paging path — no real day has ever
+      had more than a thousand strokes. */
+  limit?: number;
 }
 
 export interface StrokeProgress {
@@ -145,7 +153,7 @@ export interface StrokeProgress {
 export async function fetchDayStrokes(
   canvasId: number,
   onPage: (items: StrokeRecord[], progress: StrokeProgress) => void,
-  options: GqlOptions & { afterId?: bigint | null } = {},
+  options: StrokeFetchOptions & { afterId?: bigint | null } = {},
 ): Promise<{ pages: number; lastId: bigint | null }> {
   const { afterId = null, ...gqlOptions } = options;
   let cursor: string | null = null;

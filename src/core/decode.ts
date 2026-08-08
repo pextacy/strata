@@ -162,7 +162,14 @@ export class PlacementsBuilder {
           this.anomalies.offCanvas++;
           return;
         }
-        if (color >= this.paletteLength) this.anomalies.unknownColor++;
+        // A palette index the day does not have is dropped, not drawn in some
+        // guessed colour. BasePaint's own renderer ignores these pixels — the
+        // colour underneath shows through — and `npm run verify` only reaches
+        // zero mismatches when Strata ignores them too. Day 500 has 52.
+        if (color >= this.paletteLength) {
+          this.anomalies.unknownColor++;
+          return;
+        }
         this.push(x, y, color, artist, time);
       });
     } catch (err) {

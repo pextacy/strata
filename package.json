@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "introspect": "node scripts/introspect.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "capture": "node scripts/capture-fixture.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.2.2",

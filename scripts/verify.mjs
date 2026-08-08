@@ -27,7 +27,7 @@ async function fetchPng(day) {
 /** "#rrggbb" -> packed 0xrrggbb, for comparing against PNG samples. */
 const packHex = (hex) => parseInt(hex.slice(1), 16);
 
-async function verifyDay(day) {
+async function verifyDay(day, limit) {
   const theme = await fetchTheme(day);
   const { size, palette } = theme;
 
@@ -39,7 +39,7 @@ async function verifyDay(day) {
     process.stdout.write(
       `\r  day ${day}: page ${progress.page}, ${progress.strokes}/${progress.totalStrokes} strokes, ${builder.length} placements   `,
     );
-  });
+  }, limit === undefined ? {} : { limit });
   process.stdout.write("\n");
 
   const placements = builder.finish();
@@ -58,7 +58,7 @@ async function verifyDay(day) {
   const mismatches = [];
   let painted = 0;
   let mismatched = 0;
-  let unpaintedOpaque = 0;
+  let unpainted = 0;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -70,20 +70,13 @@ async function verifyDay(day) {
       const a = png.data[at + 3];
       const actual = (r << 16) | (g << 8) | b;
 
-      if (layers.depth[cell] === 0) {
-        // Unpainted cells should be transparent in the official render.
-        if (a !== 0) {
-          unpaintedOpaque++;
-          mismatched++;
-          if (mismatches.length < 10) {
-            mismatches.push({ x, y, expected: "unpainted", actual: `${hex(actual)} alpha ${a}` });
-          }
-        }
-        continue;
-      }
+      // The canvas starts as palette index 0 everywhere, so a cell nobody
+      // painted still renders — as the first colour of the day's palette.
+      const wasPainted = layers.depth[cell] > 0;
+      if (wasPainted) painted++;
+      else unpainted++;
 
-      painted++;
-      const expected = packed[layers.final[cell]];
+      const expected = packed[wasPainted ? layers.final[cell] : 0];
       if (a === 0 || expected === undefined || actual !== expected) {
         mismatched++;
         if (mismatches.length < 10) {
@@ -108,9 +101,9 @@ async function verifyDay(day) {
     artists: placements.artists.length,
     painted,
     mismatched,
-    unpaintedOpaque,
+    unpainted,
     samples: mismatches.slice(0, 10),
-    anomalies: placements.anomalies,
+    anomalies: builder.anomalies,
   };
 }
 
@@ -118,9 +111,15 @@ function hex(v) {
   return `#${v.toString(16).padStart(6, "0")}`;
 }
 
-const days = process.argv.slice(2).map(Number).filter(Number.isInteger);
+const argv = process.argv.slice(2);
+// --limit=N forces the paged path. No real day has ever had more than a
+// thousand strokes, so this is the only way to prove page assembly is right.
+const limitArg = argv.find((a) => a.startsWith("--limit="));
+const limit = limitArg === undefined ? undefined : Number(limitArg.slice("--limit=".length));
+const days = argv.filter((a) => !a.startsWith("--")).map(Number).filter(Number.isInteger);
+
 if (days.length === 0) {
-  console.error("usage: npm run verify -- <day> [day...]");
+  console.error("usage: npm run verify -- <day> [day...] [--limit=N]");
   process.exit(2);
 }
 
@@ -130,7 +129,7 @@ let failed = false;
 for (const day of days) {
   console.log(`\nday ${day}`);
   try {
-    const r = await verifyDay(day);
+    const r = await verifyDay(day, limit);
     results.push(r);
     const ok = r.mismatched === 0;
     if (!ok) failed = true;
