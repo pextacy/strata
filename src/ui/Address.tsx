@@ -1,23 +1,45 @@
-// An address, shortened for reading and complete on hover. ENS resolution lands
-// in the artist phase; until then the raw address is the honest thing to show,
-// and it is never truncated in the title.
+// An address, shortened for reading and complete on hover. The ENS name replaces
+// it only once a lookup has come back and checked out; until then, and forever
+// if there is no name, the raw address is what shows. Nothing here ever waits.
+
+import { useEffect, useState } from "react";
+
+import { ensName, knownEnsName } from "../data/ens.ts";
+import { shortAddress } from "./format.ts";
 
 export interface AddressProps {
   readonly address: string;
   /** Characters kept at each end. */
   readonly keep?: number;
+  /** Skip the ENS lookup — for lists long enough that the names are noise. */
+  readonly raw?: boolean;
 }
 
-export function Address({ address, keep = 4 }: AddressProps) {
+export function Address({ address, keep = 4, raw = false }: AddressProps) {
   const clean = address.trim();
-  const short =
-    clean.length > 2 + keep * 2 + 2
-      ? `${clean.slice(0, 2 + keep)}…${clean.slice(-keep)}`
-      : clean;
+  const [name, setName] = useState<string | null>(() => knownEnsName(clean) ?? null);
+
+  useEffect(() => {
+    if (raw) return;
+    const known = knownEnsName(clean);
+    if (known !== undefined) {
+      setName(known);
+      return;
+    }
+
+    let live = true;
+    setName(null);
+    void ensName(clean).then((resolved) => {
+      if (live) setName(resolved);
+    });
+    return () => {
+      live = false;
+    };
+  }, [clean, raw]);
 
   return (
     <code className="address" title={clean}>
-      {short}
+      {name ?? shortAddress(clean, keep)}
     </code>
   );
 }

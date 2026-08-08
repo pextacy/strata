@@ -1,8 +1,22 @@
 // The canvas itself, drawn at an integer scale and nothing else. A 256-pixel
 // canvas drawn at 1.5× produces uneven pixels and it is the first thing anyone
 // who cares about pixel art notices.
+//
+// It is also where a cell is picked. Pointer, tap, and arrow keys all land on
+// the same two callbacks: hovering is a preview, choosing is a commitment.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+
+import { keyToStep, pixelAt, samePixel, type Pixel } from "../core/pixel.ts";
+
+export interface CanvasPick {
+  /** The cell in the URL. Drawn as the strong marker. */
+  readonly selected: Pixel | null;
+  /** The cell under the pointer. Drawn faintly, and never written to the URL. */
+  readonly hovered: Pixel | null;
+  readonly onHover: (pixel: Pixel | null) => void;
+  readonly onSelect: (pixel: Pixel) => void;
+}
 
 export interface CanvasViewProps {
   /** One rendered view of the day, or null while it is being built. */
@@ -12,9 +26,11 @@ export interface CanvasViewProps {
   readonly label: string;
   /** Ceiling on the integer scale, so a 144 day does not fill a 5K display. */
   readonly maxScale?: number;
+  /** Omit to render the artwork alone, with no cell picking. */
+  readonly pick?: CanvasPick;
 }
 
-export function CanvasView({ image, size, label, maxScale = 8 }: CanvasViewProps) {
+export function CanvasView({ image, size, label, maxScale = 8, pick }: CanvasViewProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sourceRef = useRef<HTMLCanvasElement | null>(null);
@@ -74,17 +90,104 @@ export function CanvasView({ image, size, label, maxScale = 8 }: CanvasViewProps
     ctx.drawImage(source, 0, 0, pixels, pixels);
   }, [image, size, scale]);
 
+  const cellAt = useCallback(
+    (event: PointerEvent<HTMLElement>): Pixel | null => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      return pixelAt(event.clientX - rect.left, event.clientY - rect.top, rect.width, size);
+    },
+    [size],
+  );
+
+  const onPointerMove = useCallback(
+    (event: PointerEvent<HTMLElement>) => {
+      if (pick === undefined) return;
+      // A coarse pointer has no hover: a finger on the canvas is a choice.
+      if (event.pointerType !== "mouse") return;
+      const cell = cellAt(event);
+      if (!samePixel(cell, pick.hovered)) pick.onHover(cell);
+    },
+    [cellAt, pick],
+  );
+
+  const onPointerDown = useCallback(
+    (event: PointerEvent<HTMLElement>) => {
+      if (pick === undefined) return;
+      const cell = cellAt(event);
+      if (cell !== null) pick.onSelect(cell);
+    },
+    [cellAt, pick],
+  );
+
+  const onPointerLeave = useCallback(() => {
+    if (pick !== undefined && pick.hovered !== null) pick.onHover(null);
+  }, [pick]);
+
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLElement>) => {
+      if (pick === undefined) return;
+      // With nothing selected yet, the first arrow key starts in the middle,
+      // which is where the painting usually is.
+      const from = pick.selected ?? { x: Math.floor(size / 2), y: Math.floor(size / 2) };
+      const next = keyToStep(event.key, size, from);
+      if (next === null) return;
+      event.preventDefault();
+      pick.onSelect(pick.selected === null ? from : next);
+    },
+    [pick, size],
+  );
+
   const side = `${size * scale}px`;
+  const marker = (pixel: Pixel) => ({
+    left: `${pixel.x * scale}px`,
+    top: `${pixel.y * scale}px`,
+    width: `${scale}px`,
+    height: `${scale}px`,
+  });
+
+  const interactive = pick !== undefined && image !== null;
 
   return (
     <div className="canvas-frame" ref={frameRef}>
-      <canvas
-        ref={canvasRef}
-        className="canvas-art"
+      <div
+        className={interactive ? "canvas-stage canvas-stage-pick" : "canvas-stage"}
         style={{ width: side, height: side }}
-        role="img"
-        aria-label={label}
-      />
+        onPointerMove={interactive ? onPointerMove : undefined}
+        onPointerDown={interactive ? onPointerDown : undefined}
+        onPointerLeave={interactive ? onPointerLeave : undefined}
+        onKeyDown={interactive ? onKeyDown : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        role={interactive ? "application" : undefined}
+        aria-label={interactive ? `${label}. Arrow keys drill into a pixel.` : undefined}
+      >
+        <canvas
+          ref={canvasRef}
+          className="canvas-art"
+          style={{ width: side, height: side }}
+          role="img"
+          aria-label={label}
+        />
+        {pick?.hovered != null && !samePixel(pick.hovered, pick.selected) && (
+          <span className="cell-marker cell-marker-hover" style={marker(pick.hovered)} aria-hidden="true" />
+        )}
+        {pick?.selected != null && (
+          <>
+            {/* One cell at 2× is four screen pixels — findable only if something
+                points at it. The crosshair is how a pixel editor has always
+                done this, and it survives any palette underneath. */}
+            <span
+              className="cell-cross cell-cross-v"
+              style={{ left: `${pick.selected.x * scale}px`, width: `${scale}px` }}
+              aria-hidden="true"
+            />
+            <span
+              className="cell-cross cell-cross-h"
+              style={{ top: `${pick.selected.y * scale}px`, height: `${scale}px` }}
+              aria-hidden="true"
+            />
+            <span className="cell-marker cell-marker-selected" style={marker(pick.selected)} aria-hidden="true" />
+          </>
+        )}
+      </div>
       <p className="canvas-scale" aria-hidden="true">
         {size}&times;{size} at {scale}&times;
       </p>

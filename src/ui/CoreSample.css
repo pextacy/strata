@@ -1,0 +1,190 @@
+/* The column reads downwards, into the canvas: newest band at the top, oldest
+   at the bottom, the way a real core comes out of the ground. */
+
+.core {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.core-head h2 {
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.core-hint {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+  max-width: 24rem;
+}
+
+.core-where {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0.3rem 0 0;
+}
+
+.core-coords {
+  font-size: var(--step-1);
+  color: var(--accent);
+}
+
+.core-preview {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.core-note {
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--bg-raised);
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.core-summary {
+  margin: 0 0 0.6rem;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+
+.core-summary strong {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.core-stack {
+  display: flex;
+  /* Chronological in the DOM, reversed on screen: oldest at the bottom. */
+  flex-direction: column-reverse;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  background: var(--line);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.core-band {
+  display: flex;
+  align-items: stretch;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-raised);
+}
+
+/* A buried band is dimmed, but it also says "buried" in words — colour is never
+   the only thing carrying the meaning. */
+.core-band-buried {
+  background: var(--bg-sunken);
+}
+
+.core-band-buried .core-band-meta,
+.core-band-buried .core-painter {
+  opacity: 0.65;
+}
+
+.core-swatch {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  align-self: stretch;
+  min-height: 1.6rem;
+  border: 1px solid rgb(0 0 0 / 0.35);
+}
+
+.core-band-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.core-painter {
+  text-decoration: none;
+  min-width: 0;
+}
+
+.core-painter:hover .address,
+.core-painter:focus-visible .address {
+  text-decoration: underline;
+}
+
+.core-band-meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.core-color {
+  font-variant-numeric: tabular-nums;
+}
+
+.core-band-index {
+  margin-left: auto;
+  align-self: center;
+  color: var(--muted);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The marker over the picked cell. Two rings so it reads on any palette. */
+.cell-marker {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.cell-marker-hover {
+  outline: 1px solid rgb(255 255 255 / 0.75);
+  outline-offset: 0;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.7);
+}
+
+.cell-marker-selected {
+  outline: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 0.75);
+}
+
+/* Guides running the full width and height of the canvas, meeting on the picked
+   cell. Faint enough not to compete with the artwork, bright enough to find. */
+.cell-cross {
+  position: absolute;
+  pointer-events: none;
+  background: rgb(253 224 71 / 0.35);
+  mix-blend-mode: screen;
+}
+
+.cell-cross-v {
+  top: 0;
+  bottom: 0;
+}
+
+.cell-cross-h {
+  left: 0;
+  right: 0;
+}
+
+.canvas-stage {
+  position: relative;
+  display: block;
+}
+
+.canvas-stage-pick {
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+
+.canvas-stage:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

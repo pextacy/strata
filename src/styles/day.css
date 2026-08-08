@@ -345,3 +345,25 @@
     grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
   }
 }
+
+/* --- the dig: canvas and core sample side by side ------------------------- */
+
+.excavation .excavation-dig {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Under about a tablet the column goes below the canvas rather than squeezing
+   the artwork, which is the thing the page is for. */
+@media (max-width: 56rem) {
+  .excavation .excavation-dig {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The canvas keeps its own height; a long core sample must not stretch it. */
+.excavation .excavation-dig > .canvas-panel {
+  align-self: start;
+}

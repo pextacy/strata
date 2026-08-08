@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { currentDay, dayEnd, dayStart, isDayOpen } from "./core/day-math.ts";
 import { DataError } from "./data/client.ts";
@@ -110,6 +111,10 @@ export default function App() {
           {state.detail !== undefined && <small className="detail">{state.detail}</small>}
         </p>
       )}
+
+      <p className="go">
+        <Link to={`/day/${day}`}>Dig into day {day}</Link>
+      </p>
 
       <footer>
         <a href={basepaintUrl()}>Paint at basepaint.xyz</a>
