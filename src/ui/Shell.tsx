@@ -5,11 +5,11 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Outlet, useMatch, useNavigate, useSearchParams } from "react-router-dom";
 
-import { currentDay } from "../core/day-math.ts";
-import { BEACON_URL, basepaintUrl } from "../data/links.ts";
-import { isViewMode } from "../render/layers.ts";
-import { RouteErrorBoundary } from "./ErrorBoundary.tsx";
-import { PixelText } from "./PixelText.tsx";
+import { currentDay } from "../core/day-math.js";
+import { BEACON_URL, basepaintUrl } from "../data/links.js";
+import { isViewMode } from "../render/layers.js";
+import { RouteErrorBoundary } from "./ErrorBoundary.js";
+import { PixelText } from "./PixelText.js";
 import "../styles/shell.css";
 
 const REPO_URL: string | undefined = import.meta.env.VITE_REPO_URL;

@@ -7,8 +7,8 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
-import { keyToStep, pixelAt, samePixel, type Pixel } from "../core/pixel.ts";
-import { PixelText } from "./PixelText.tsx";
+import { keyToStep, pixelAt, samePixel, type Pixel } from "../core/pixel.js";
+import { PixelText } from "./PixelText.js";
 
 /**
  * The gutter the left-hand ruler occupies, matching `--u3` in tokens.css. The

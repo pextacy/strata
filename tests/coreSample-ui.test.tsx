@@ -2,8 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import type { Band } from "../src/core/coreSample.ts";
-import { CoreSample } from "../src/ui/CoreSample.tsx";
+import type { Band } from "../src/core/coreSample.js";
+import { CoreSample } from "../src/ui/CoreSample.js";
 
 /**
  * The column reads down from the surface, and the order it reads in is not

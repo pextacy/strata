@@ -7,11 +7,11 @@
 
 import { Link } from "react-router-dom";
 
-import type { Band } from "../core/coreSample.ts";
-import type { Pixel } from "../core/pixel.ts";
-import { Address } from "./Address.tsx";
-import { PixelText } from "./PixelText.tsx";
-import { formatElapsed } from "./format.ts";
+import type { Band } from "../core/coreSample.js";
+import type { Pixel } from "../core/pixel.js";
+import { Address } from "./Address.js";
+import { PixelText } from "./PixelText.js";
+import { formatElapsed } from "./format.js";
 import "./CoreSample.css";
 
 export interface CoreSampleProps {

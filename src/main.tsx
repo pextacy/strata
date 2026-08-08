@@ -2,8 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
-import App from "./App.tsx";
-import { RouteErrorBoundary } from "./ui/ErrorBoundary.tsx";
+import App from "./App.js";
+import { RouteErrorBoundary } from "./ui/ErrorBoundary.js";
 import "./index.css";
 
 const root = document.getElementById("root");

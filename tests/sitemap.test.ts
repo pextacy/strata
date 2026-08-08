@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { assetOrigin, publicOrigin } from "../api/_lib/origin.ts";
-import { robots } from "../api/robots.ts";
-import { sitemap } from "../api/sitemap.ts";
-import { dayEnd } from "../src/core/day-math.ts";
+import { assetOrigin, publicOrigin } from "../api/_lib/origin.js";
+import { robots } from "../api/robots.js";
+import { sitemap } from "../api/sitemap.js";
+import { dayEnd } from "../src/core/day-math.js";
 
 const ORIGIN = "https://strata.example";
 

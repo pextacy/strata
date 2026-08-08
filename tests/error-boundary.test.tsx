@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { ErrorBoundary, ErrorFallback } from "../src/ui/ErrorBoundary.tsx";
+import { ErrorBoundary, ErrorFallback } from "../src/ui/ErrorBoundary.js";
 
 /**
  * `renderToStaticMarkup` does not run error boundaries — a throw propagates out

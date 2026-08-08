@@ -15,7 +15,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { Failure } from "./states.tsx";
+import { Failure } from "./states.js";
 
 export interface ErrorBoundaryProps {
   readonly children: ReactNode;

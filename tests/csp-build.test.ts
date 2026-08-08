@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { CSP } from "../api/_lib/security.ts";
+import { CSP } from "../api/_lib/security.js";
 
 /**
  * The built shell, read against the policy that will be sent with it.

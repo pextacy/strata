@@ -2,11 +2,11 @@
 // progress to report to anyone. Same core functions the app uses, so a share
 // card can never disagree with the page it is advertising.
 
-import { PlacementsBuilder, type Placements } from "../../src/core/decode.ts";
-import { dayStats, replay, type DayStats, type Layers } from "../../src/core/replay.ts";
-import { fetchDayStrokes } from "../../src/data/queries.ts";
-import { fetchTheme, type Theme } from "../../src/data/theme.ts";
-import { toRgba } from "../../src/render/palette.ts";
+import { PlacementsBuilder, type Placements } from "../../src/core/decode.js";
+import { dayStats, replay, type DayStats, type Layers } from "../../src/core/replay.js";
+import { fetchDayStrokes } from "../../src/data/queries.js";
+import { fetchTheme, type Theme } from "../../src/data/theme.js";
+import { toRgba } from "../../src/render/palette.js";
 
 export interface ServerDay {
   readonly day: number;

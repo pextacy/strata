@@ -4,8 +4,8 @@
 
 import { useEffect, useState } from "react";
 
-import { knownEnsName } from "../data/ensCache.ts";
-import { shortAddress } from "./format.ts";
+import { knownEnsName } from "../data/ensCache.js";
+import { shortAddress } from "./format.js";
 
 export interface AddressProps {
   readonly address: string;
@@ -33,7 +33,7 @@ export function Address({ address, keep = 4, raw = false }: AddressProps) {
     // brings viem with it — 87 kB of the bundle, for a decoration. The canvas
     // is on screen before any of this is asked for, and a page whose addresses
     // all resolved earlier in the session never asks at all.
-    void import("../data/ens.ts")
+    void import("../data/ens.js")
       .then(async ({ ensName }) => await ensName(clean))
       .then((resolved) => {
         if (live) setName(resolved);

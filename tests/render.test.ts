@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { PlacementsBuilder, type StrokeRecord } from "../src/core/decode.ts";
-import { dayStats, replay } from "../src/core/replay.ts";
+import { PlacementsBuilder, type StrokeRecord } from "../src/core/decode.js";
+import { dayStats, replay } from "../src/core/replay.js";
 import {
   MODE_COPY,
   VIEW_MODES,
   isViewMode,
   paintLayer,
   readViewMode,
-} from "../src/render/layers.ts";
+} from "../src/render/layers.js";
 import {
   TRANSPARENT,
   depthColor,
   packRgba,
   parseHexColor,
   toRgba,
-} from "../src/render/palette.ts";
+} from "../src/render/palette.js";
 
 const PALETTE = ["#000000", "#ff0000", "#00ff00", "#0000ff"];
 

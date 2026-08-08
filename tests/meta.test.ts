@@ -8,10 +8,10 @@ import handler, {
   matchDay,
   metaFor,
   type Meta,
-} from "../api/html.ts";
-import { CARD_VERSION } from "../api/_lib/cardVersion.ts";
-import { checksumAddress } from "../src/data/address.ts";
-import { currentDay } from "../src/core/day-math.ts";
+} from "../api/html.js";
+import { CARD_VERSION } from "../api/_lib/cardVersion.js";
+import { checksumAddress } from "../src/data/address.js";
+import { currentDay } from "../src/core/day-math.js";
 
 /**
  * Crawlers do not run the router, so these tags are the entire preview of a

@@ -10,8 +10,8 @@
  * this project and a smeared pixel in it undoes the argument.
  */
 
-import type { Layers } from "../core/replay.ts";
-import { drawText, fillRect, fitText, textWidth, type Surface } from "./pixelFont.ts";
+import type { Layers } from "../core/replay.js";
+import { drawText, fillRect, fitText, textWidth, type Surface } from "./pixelFont.js";
 import {
   TRANSPARENT,
   blueOf,
@@ -19,7 +19,7 @@ import {
   isTransparent,
   packRgba,
   redOf,
-} from "./palette.ts";
+} from "./palette.js";
 
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;

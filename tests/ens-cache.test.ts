@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { forgetEnsNames, knownEnsName, rememberEnsName } from "../src/data/ensCache.ts";
+import { forgetEnsNames, knownEnsName, rememberEnsName } from "../src/data/ensCache.js";
 
 /**
  * The cache is read during render, before the resolver has been loaded, so the

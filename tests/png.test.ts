@@ -2,8 +2,8 @@ import { deflateSync } from "node:zlib";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { encodePng } from "../src/render/png.ts";
-import { packRgba } from "../src/render/palette.ts";
+import { encodePng } from "../src/render/png.js";
+import { packRgba } from "../src/render/palette.js";
 
 /**
  * The encoder is checked by decoding what it writes with pngjs — the same

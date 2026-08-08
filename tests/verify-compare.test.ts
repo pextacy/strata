@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs script with no types of its own.
 import { compareRender } from "../scripts/verify.mjs";
 
-import { allocLayers, replayInto } from "../src/core/replay.ts";
-import type { Placements } from "../src/core/decode.ts";
+import { allocLayers, replayInto } from "../src/core/replay.js";
+import type { Placements } from "../src/core/decode.js";
 
 /**
  * The cell-by-cell diff that `npm run verify` makes its one hard claim with.

@@ -20,7 +20,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { drawText, textHeight, textWidth } from "../render/pixelFont.ts";
+import { drawText, textHeight, textWidth } from "../render/pixelFont.js";
 
 export interface PixelTextProps {
   readonly children: string;

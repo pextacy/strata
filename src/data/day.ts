@@ -5,10 +5,10 @@
 
 import { get as idbGet, set as idbSet } from "idb-keyval";
 
-import { noAnomalies, type Anomalies, type Placements } from "../core/decode.ts";
-import { isDayOpen } from "../core/day-math.ts";
-import { dayStats, replay, type DayStats, type Layers } from "../core/replay.ts";
-import { toRgba } from "../render/palette.ts";
+import { noAnomalies, type Anomalies, type Placements } from "../core/decode.js";
+import { isDayOpen } from "../core/day-math.js";
+import { dayStats, replay, type DayStats, type Layers } from "../core/replay.js";
+import { toRgba } from "../render/palette.js";
 import type {
   FailedMessage,
   LoadPhase,
@@ -16,9 +16,9 @@ import type {
   ReadyMessage,
   WorkerRequest,
   WorkerResponse,
-} from "../workers/protocol.ts";
-import { DataError } from "./client.ts";
-import { fetchTheme, type Theme } from "./theme.ts";
+} from "../workers/protocol.js";
+import { DataError } from "./client.js";
+import { fetchTheme, type Theme } from "./theme.js";
 
 /** Bump this whenever the decoder or the cached shape changes. */
 export const CACHE_VERSION = 2;

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DataError } from "../src/data/client.ts";
-import { fetchDayStrokes } from "../src/data/queries.ts";
+import { DataError } from "../src/data/client.js";
+import { fetchDayStrokes } from "../src/data/queries.js";
 
 /**
  * The paging loop is the one place in the app that decides when a day is fully

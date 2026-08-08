@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { currentDay, dayEnd, dayProgress, dayStart, isDayOpen, padDay } from "../src/core/day-math.ts";
-import { DAY_DURATION, DAY_ONE_START } from "../src/core/constants.ts";
+import { currentDay, dayEnd, dayProgress, dayStart, isDayOpen, padDay } from "../src/core/day-math.js";
+import { DAY_DURATION, DAY_ONE_START } from "../src/core/constants.js";
 
 describe("currentDay", () => {
   it("matches the three anchors in DOCS.md §2", () => {

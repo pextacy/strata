@@ -1,4 +1,4 @@
-import type { Placements } from "./decode.ts";
+import type { Placements } from "./decode.js";
 
 /**
  * Replaying every placement in id order rebuilds the canvas exactly as the

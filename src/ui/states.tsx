@@ -6,7 +6,7 @@
 
 import type { ReactNode } from "react";
 
-import type { DayProgress } from "../data/day.ts";
+import type { DayProgress } from "../data/day.js";
 import "../styles/states.css";
 
 const count = new Intl.NumberFormat("en-US");

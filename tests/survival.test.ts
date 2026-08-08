@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { PlacementsBuilder, type Placements, type StrokeRecord } from "../src/core/decode.ts";
-import { replay } from "../src/core/replay.ts";
+import { PlacementsBuilder, type Placements, type StrokeRecord } from "../src/core/decode.js";
+import { replay } from "../src/core/replay.js";
 import {
   aggregateSurvival,
   artistDaySurvival,
@@ -12,7 +12,7 @@ import {
   emptyLifetime,
   overpaintPairs,
   type ArtistDaySurvival,
-} from "../src/core/survival.ts";
+} from "../src/core/survival.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("./fixtures/day-0500-strokes.json", import.meta.url), "utf8"),

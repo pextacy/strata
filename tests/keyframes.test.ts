@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { Placements } from "../src/core/decode.ts";
-import { Timeline, keyframeBudget, placementHistogram } from "../src/core/keyframes.ts";
-import { replay, type Layers } from "../src/core/replay.ts";
+import type { Placements } from "../src/core/decode.js";
+import { Timeline, keyframeBudget, placementHistogram } from "../src/core/keyframes.js";
+import { replay, type Layers } from "../src/core/replay.js";
 
 /**
  * A scrub is only allowed to be fast if it is also exactly right. Every case

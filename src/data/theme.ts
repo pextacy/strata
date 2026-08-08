@@ -1,4 +1,4 @@
-import { DataError, getJson, type GqlOptions } from "./client.ts";
+import { DataError, getJson, type GqlOptions } from "./client.js";
 
 /**
  * The theme endpoint is the source of truth for a day's palette and canvas

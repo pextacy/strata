@@ -1,9 +1,9 @@
 // The contract between the main thread and the replay worker. Kept in its own
 // module so both sides import the same types and neither imports the other.
 
-import type { Anomalies, Placements } from "../core/decode.ts";
-import type { DayStats, Layers } from "../core/replay.ts";
-import type { FailureKind } from "../data/client.ts";
+import type { Anomalies, Placements } from "../core/decode.js";
+import type { DayStats, Layers } from "../core/replay.js";
+import type { FailureKind } from "../data/client.js";
 
 /** Fetch the day (optionally resuming), decode, replay. */
 export interface LoadRequest {

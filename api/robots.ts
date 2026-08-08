@@ -5,8 +5,8 @@
 // ignored — and a static file cannot know which domain it is being served
 // from. The rest of the file is the same two sentences it would otherwise be.
 
-import { publicOrigin } from "./_lib/origin.ts";
-import { assetHeaders } from "./_lib/security.ts";
+import { publicOrigin } from "./_lib/origin.js";
+import { assetHeaders } from "./_lib/security.js";
 
 // Pure string building, no network. It either answers at once or never.
 export const config = { runtime: "nodejs", maxDuration: 10 };

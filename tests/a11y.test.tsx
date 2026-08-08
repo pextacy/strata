@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import App from "../src/App.tsx";
+import App from "../src/App.js";
 
 /**
  * The structural half of accessibility, read off the real markup.

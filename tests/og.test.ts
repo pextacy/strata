@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import handler, { cachePolicy } from "../api/og.ts";
-import { currentDay } from "../src/core/day-math.ts";
+import handler, { cachePolicy } from "../api/og.js";
+import { currentDay } from "../src/core/day-math.js";
 
 /**
  * The share card is the first thing most people ever see of this project, and

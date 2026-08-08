@@ -3,8 +3,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { DataError, isAbort } from "./client.ts";
-import { initialProgress, loadDay, type DayData, type DayProgress } from "./day.ts";
+import { DataError, isAbort } from "./client.js";
+import { initialProgress, loadDay, type DayData, type DayProgress } from "./day.js";
 
 export type DayState =
   | { readonly status: "idle" }

@@ -6,8 +6,8 @@ import {
   isViewMode,
   readViewMode,
   type ViewMode,
-} from "../render/layers.ts";
-import { liveParams, readableSearch } from "./search.ts";
+} from "../render/layers.js";
+import { liveParams, readableSearch } from "./search.js";
 
 /**
  * `?mode=` holds which of the four ways of reading a day is on screen.

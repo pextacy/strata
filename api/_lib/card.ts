@@ -2,17 +2,17 @@
 // card is computed here from the same buffers the app draws, so a card can be
 // checked against the page it links to.
 
-import { artistIndex } from "../../src/core/survival.ts";
-import { paintLayer } from "../../src/render/layers.ts";
-import { encodePng, type Deflate } from "../../src/render/png.ts";
+import { artistIndex } from "../../src/core/survival.js";
+import { paintLayer } from "../../src/render/layers.js";
+import { encodePng, type Deflate } from "../../src/render/png.js";
 import {
   asGround,
   claimedPixels,
   over,
   renderShareCard,
   type CardPanel,
-} from "../../src/render/shareCard.ts";
-import type { ServerDay } from "./day.ts";
+} from "../../src/render/shareCard.js";
+import type { ServerDay } from "./day.js";
 
 /** node:zlib when it is there, uncompressed deflate when it is not. */
 export async function nodeDeflate(): Promise<Deflate | undefined> {

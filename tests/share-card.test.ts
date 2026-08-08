@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { allocLayers } from "../src/core/replay.ts";
-import { packRgba, TRANSPARENT } from "../src/render/palette.ts";
-import { drawText, fitText, fontSafe, textWidth } from "../src/render/pixelFont.ts";
+import { allocLayers } from "../src/core/replay.js";
+import { packRgba, TRANSPARENT } from "../src/render/palette.js";
+import { drawText, fitText, fontSafe, textWidth } from "../src/render/pixelFont.js";
 import {
   CARD_HEIGHT,
   CARD_WIDTH,
@@ -10,7 +10,7 @@ import {
   claimedPixels,
   over,
   renderShareCard,
-} from "../src/render/shareCard.ts";
+} from "../src/render/shareCard.js";
 
 const RED = packRgba(220, 40, 40);
 const BLUE = packRgba(40, 80, 220);

@@ -11,9 +11,9 @@
 // is no way to enumerate them without asking the indexer for every account —
 // which is a lot of work to publish a list nobody asked for.
 
-import { currentDay, dayEnd } from "../src/core/day-math.ts";
-import { publicOrigin } from "./_lib/origin.ts";
-import { assetHeaders } from "./_lib/security.ts";
+import { currentDay, dayEnd } from "../src/core/day-math.js";
+import { publicOrigin } from "./_lib/origin.js";
+import { assetHeaders } from "./_lib/security.js";
 
 // Pure string building, no network. It either answers at once or never.
 export const config = { runtime: "nodejs", maxDuration: 10 };

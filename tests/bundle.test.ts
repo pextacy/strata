@@ -17,11 +17,22 @@ import { describe, expect, it } from "vitest";
 const source = (path: string): string =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-/** A static `import … from "x"`, which pulls x into whatever chunk this is. */
-const staticallyImports = (path: string, specifier: string): boolean =>
-  new RegExp(String.raw`^\s*import\s[^;]*?from\s+["'][^"']*${specifier}["']`, "m").test(
-    source(path),
-  );
+/**
+ * A static `import … from "x"`, which pulls x into whatever chunk this is.
+ *
+ * `module` is written without an extension and matched with or without one. It
+ * used to include the extension, and when every relative specifier in the
+ * project moved from `.ts` to `.js` that quietly turned the two "must not
+ * import this" assertions into tautologies: they went on passing because the
+ * pattern no longer matched anything, not because the import was absent. A
+ * guard that cannot fail is worse than no guard, so it does not get to depend
+ * on how a path happens to be spelled.
+ */
+const staticallyImports = (path: string, module: string): boolean =>
+  new RegExp(
+    String.raw`^\s*import\s[^;]*?from\s+["'][^"']*${module}(?:\.(?:ts|tsx|js))?["']`,
+    "m",
+  ).test(source(path));
 
 describe("the modules that must stay free of viem", () => {
   // These two exist only so the cheap half of a viem-dependent feature can be
@@ -38,21 +49,21 @@ describe("the modules that must stay free of viem", () => {
 
 describe("the two components that reach for viem", () => {
   it("Address loads the resolver only when it has a name to look up", () => {
-    expect(staticallyImports("src/ui/Address.tsx", "data/ens.ts")).toBe(false);
+    expect(staticallyImports("src/ui/Address.tsx", "data/ens")).toBe(false);
     // Still asks for it — a dynamic import that nobody calls is just a missing
     // feature.
-    expect(source("src/ui/Address.tsx")).toContain('import("../data/ens.ts")');
+    expect(source("src/ui/Address.tsx")).toContain('import("../data/ens.js")');
   });
 
   it("MintButton loads the chain only when there is something to read or sign", () => {
-    expect(staticallyImports("src/ui/MintButton.tsx", "data/mint.ts")).toBe(false);
-    expect(source("src/ui/MintButton.tsx")).toContain('import("../data/mint.ts")');
+    expect(staticallyImports("src/ui/MintButton.tsx", "data/mint")).toBe(false);
+    expect(source("src/ui/MintButton.tsx")).toContain('import("../data/mint.js")');
   });
 
   it("MintButton can still decide it has nothing to show, for free", () => {
     // `isOnSale` and `saleEndsIn` are what rule the button out on an old canvas.
     // If they ever came from mint.ts again, every day page would load viem to
     // be told there is nothing to mint.
-    expect(staticallyImports("src/ui/MintButton.tsx", "data/mintTerms.ts")).toBe(true);
+    expect(staticallyImports("src/ui/MintButton.tsx", "data/mintTerms")).toBe(true);
   });
 });

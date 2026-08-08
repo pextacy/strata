@@ -10,7 +10,7 @@ import {
   noAnomalies,
   strokePixelCount,
   type StrokeRecord,
-} from "../src/core/decode.ts";
+} from "../src/core/decode.js";
 
 /** Real strokes, captured by `npm run capture -- 500`. Never hand-written. */
 const fixture = JSON.parse(

@@ -6,11 +6,11 @@
 
 import { Route, Routes } from "react-router-dom";
 
-import Artist from "./routes/Artist.tsx";
-import Day from "./routes/Day.tsx";
-import Home from "./routes/Home.tsx";
-import NotFound from "./routes/NotFound.tsx";
-import { Shell } from "./ui/Shell.tsx";
+import Artist from "./routes/Artist.js";
+import Day from "./routes/Day.js";
+import Home from "./routes/Home.js";
+import NotFound from "./routes/NotFound.js";
+import { Shell } from "./ui/Shell.js";
 
 export default function App() {
   return (

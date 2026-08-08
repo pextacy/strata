@@ -9,11 +9,11 @@ import {
   emptyLifetime,
   type ArtistDaySurvival,
   type LifetimeSurvival,
-} from "../core/survival.ts";
-import { checksumAddress } from "./address.ts";
-import { DataError, isAbort } from "./client.ts";
-import { loadDay } from "./day.ts";
-import { fetchAccount, fetchArtistDays, type AccountRecord } from "./queries.ts";
+} from "../core/survival.js";
+import { checksumAddress } from "./address.js";
+import { DataError, isAbort } from "./client.js";
+import { loadDay } from "./day.js";
+import { fetchAccount, fetchArtistDays, type AccountRecord } from "./queries.js";
 
 /** How many of an artist's most recent days Strata replays. */
 export const REPLAY_DAYS = 10;

@@ -3,13 +3,13 @@
 // for several seconds. The main thread only ever receives the finished buffers,
 // transferred rather than copied.
 
-import { DataError } from "../data/client.ts";
-import { PlacementsBuilder, noAnomalies, placementBuffers } from "../core/decode.ts";
-import type { Anomalies, Placements } from "../core/decode.ts";
-import { concatPlacements, mergeAnomalies } from "../core/placements.ts";
-import { dayStats, replay } from "../core/replay.ts";
-import { fetchDayStrokes } from "../data/queries.ts";
-import type { LoadRequest, ReadyMessage, WorkerRequest, WorkerResponse } from "./protocol.ts";
+import { DataError } from "../data/client.js";
+import { PlacementsBuilder, noAnomalies, placementBuffers } from "../core/decode.js";
+import type { Anomalies, Placements } from "../core/decode.js";
+import { concatPlacements, mergeAnomalies } from "../core/placements.js";
+import { dayStats, replay } from "../core/replay.js";
+import { fetchDayStrokes } from "../data/queries.js";
+import type { LoadRequest, ReadyMessage, WorkerRequest, WorkerResponse } from "./protocol.js";
 
 // lib.dom is what this project compiles against, so the worker global is typed
 // by hand instead of pulling in lib.webworker, which redeclares half of it.

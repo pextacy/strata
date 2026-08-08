@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 
-import type { Layers } from "../core/replay.ts";
-import { paintLayer, type ViewMode } from "../render/layers.ts";
+import type { Layers } from "../core/replay.js";
+import { paintLayer, type ViewMode } from "../render/layers.js";
 
 /**
  * Paints one view of the day into an ImageData, reusing two buffers instead of

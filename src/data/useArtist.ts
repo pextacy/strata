@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { DataError, isAbort } from "./client.ts";
+import { DataError, isAbort } from "./client.js";
 import {
   REPLAY_DAYS,
   loadArtist,
@@ -14,7 +14,7 @@ import {
   type ArtistDayRow,
   type ArtistProfile,
   type ArtistProgress,
-} from "./artist.ts";
+} from "./artist.js";
 
 export type ArtistState =
   | { readonly status: "idle" }

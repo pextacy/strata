@@ -8,7 +8,7 @@ import {
   pixelAt,
   samePixel,
   stepPixel,
-} from "../src/core/pixel.ts";
+} from "../src/core/pixel.js";
 
 describe("parsePixel / formatPixel", () => {
   it("round-trips a cell through the URL", () => {

@@ -7,7 +7,7 @@
 // arrays, which is a few milliseconds — far faster than the click that asked
 // for it.
 
-import type { Placements } from "./decode.ts";
+import type { Placements } from "./decode.js";
 
 /** One colour this cell has been, and who put it there. */
 export interface Band {

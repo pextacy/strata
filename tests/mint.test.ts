@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { formatEth, isOnSale, saleEndsIn, type MintTerms } from "../src/data/mintTerms.ts";
-import { BASEPAINT_ABI, REWARDS_ABI } from "../src/data/rewards.ts";
+import { formatEth, isOnSale, saleEndsIn, type MintTerms } from "../src/data/mintTerms.js";
+import { BASEPAINT_ABI, REWARDS_ABI } from "../src/data/rewards.js";
 
 /**
  * The sale window and the price come from the contract; these are the pure

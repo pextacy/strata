@@ -26,17 +26,17 @@
 
 import { describe, expect, it } from "vitest";
 
-import { PlacementsBuilder, type Placements } from "../src/core/decode.ts";
-import { coreSample, bandsUpTo } from "../src/core/coreSample.ts";
-import { Timeline, placementHistogram } from "../src/core/keyframes.ts";
-import { concatPlacements } from "../src/core/placements.ts";
-import { dayStats, indexAtTime, replay, type Layers } from "../src/core/replay.ts";
+import { PlacementsBuilder, type Placements } from "../src/core/decode.js";
+import { coreSample, bandsUpTo } from "../src/core/coreSample.js";
+import { Timeline, placementHistogram } from "../src/core/keyframes.js";
+import { concatPlacements } from "../src/core/placements.js";
+import { dayStats, indexAtTime, replay, type Layers } from "../src/core/replay.js";
 import {
   artistDaySurvival,
   cellsClaimed,
   cellsTouched,
   overpaintPairs,
-} from "../src/core/survival.ts";
+} from "../src/core/survival.js";
 
 /**
  * A seeded generator, not `Math.random`. A fuzz test that cannot be re-run on

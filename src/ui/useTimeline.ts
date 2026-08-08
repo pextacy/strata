@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
-import type { Placements } from "../core/decode.ts";
-import { Timeline, keyframeBudget, placementHistogram } from "../core/keyframes.ts";
+import type { Placements } from "../core/decode.js";
+import { Timeline, keyframeBudget, placementHistogram } from "../core/keyframes.js";
 
 /**
  * Builds the scrub keyframes once per day, right after the first replay, and

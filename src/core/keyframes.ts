@@ -1,5 +1,5 @@
-import type { Placements } from "./decode.ts";
-import { allocLayers, indexAtTime, replayInto, type Layers } from "./replay.ts";
+import type { Placements } from "./decode.js";
+import { allocLayers, indexAtTime, replayInto, type Layers } from "./replay.js";
 
 /**
  * Scrubbing a heavy day cannot rebuild the canvas from placement zero on every

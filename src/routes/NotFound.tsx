@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { currentDay } from "../core/day-math.ts";
-import { useDocumentTitle } from "../ui/useDocumentTitle.ts";
+import { currentDay } from "../core/day-math.js";
+import { useDocumentTitle } from "../ui/useDocumentTitle.js";
 
 /** A path that is not a route says so in words and offers the way back. */
 export default function NotFound() {

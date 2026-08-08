@@ -1,7 +1,7 @@
 // Four ways to read the same day. Switching is a repaint of buffers already in
 // memory, so it never asks the network for anything.
 
-import { MODE_COPY, VIEW_MODES, type ViewMode } from "../render/layers.ts";
+import { MODE_COPY, VIEW_MODES, type ViewMode } from "../render/layers.js";
 
 export interface ModeSwitchProps {
   readonly mode: ViewMode;

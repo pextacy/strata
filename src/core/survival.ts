@@ -9,8 +9,8 @@
 //   Lifetime rate  — sum of claimed ÷ sum of touched, never an average of daily
 //                    rates, which would let a one-pixel day outvote a busy one.
 
-import type { Placements } from "./decode.ts";
-import type { Layers } from "./replay.ts";
+import type { Placements } from "./decode.js";
+import type { Layers } from "./replay.js";
 
 /**
  * Cells whose final colour each artist owns. A cell nobody painted has no owner:

@@ -6,12 +6,12 @@
 // It never invents a fact. The only value it fetches is the day's theme name,
 // and when that call fails the tags fall back to the day number alone.
 
-import { checksumAddress } from "../src/data/address.ts";
-import { currentDay } from "../src/core/day-math.ts";
-import { fetchTheme } from "../src/data/theme.ts";
-import { CARD_VERSION } from "./_lib/cardVersion.ts";
-import { assetOrigin, publicOrigin } from "./_lib/origin.ts";
-import { assetHeaders, documentHeaders } from "./_lib/security.ts";
+import { checksumAddress } from "../src/data/address.js";
+import { currentDay } from "../src/core/day-math.js";
+import { fetchTheme } from "../src/data/theme.js";
+import { CARD_VERSION } from "./_lib/cardVersion.js";
+import { assetOrigin, publicOrigin } from "./_lib/origin.js";
+import { assetHeaders, documentHeaders } from "./_lib/security.js";
 
 /**
  * This one fetches its own shell and, for a day route, one theme name — both

@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from "react";
 
-import { formatElapsed } from "./format.ts";
+import { formatElapsed } from "./format.js";
 import "./Scrubber.css";
 
 /**

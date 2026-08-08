@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { liveParams, readableSearch } from "../src/ui/search.ts";
+import { liveParams, readableSearch } from "../src/ui/search.js";
 
 /**
  * Three hooks write this one query string — the mode, the moment, and the

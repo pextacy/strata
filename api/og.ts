@@ -8,13 +8,13 @@
 // work the browser does, so the card can never show a number the app disagrees
 // with. Finished days never change, so the CDN keeps the answer for a day.
 
-import { checksumAddress } from "../src/data/address.ts";
-import { currentDay } from "../src/core/day-math.ts";
-import { artistDaySurvival } from "../src/core/survival.ts";
-import { fetchAccount, fetchArtistDays } from "../src/data/queries.ts";
-import { artistCard, dayCard, nodeDeflate } from "./_lib/card.ts";
-import { replayDay } from "./_lib/day.ts";
-import { assetHeaders } from "./_lib/security.ts";
+import { checksumAddress } from "../src/data/address.js";
+import { currentDay } from "../src/core/day-math.js";
+import { artistDaySurvival } from "../src/core/survival.js";
+import { fetchAccount, fetchArtistDays } from "../src/data/queries.js";
+import { artistCard, dayCard, nodeDeflate } from "./_lib/card.js";
+import { replayDay } from "./_lib/day.js";
+import { assetHeaders } from "./_lib/security.js";
 
 /**
  * Long enough for the work this actually does, and stated rather than inherited.

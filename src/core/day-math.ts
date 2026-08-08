@@ -1,4 +1,4 @@
-import { DAY_DURATION, DAY_ONE_START } from "./constants.ts";
+import { DAY_DURATION, DAY_ONE_START } from "./constants.js";
 
 /**
  * The BasePaint day number for a given moment. Day 1 is the day that opened at

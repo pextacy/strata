@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { liveParams, readableSearch } from "./search.ts";
+import { liveParams, readableSearch } from "./search.js";
 
 /**
  * `?t=` holds the moment being looked at, in seconds since the day opened, so

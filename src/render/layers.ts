@@ -1,8 +1,8 @@
 // The four ways to read a day. Each one is a single pass over the replay
 // buffers, which is why switching modes costs nothing and refetches nothing.
 
-import type { Layers } from "../core/replay.ts";
-import { TRANSPARENT, depthColor } from "./palette.ts";
+import type { Layers } from "../core/replay.js";
+import { TRANSPARENT, depthColor } from "./palette.js";
 
 export type ViewMode = "final" | "underpainting" | "depth" | "ghost";
 

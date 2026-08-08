@@ -22,10 +22,10 @@
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "introspect": "node scripts/introspect.mjs",
-    "verify": "node scripts/verify.mjs",
-    "live": "node scripts/live.mjs",
-    "capture": "node scripts/capture-fixture.mjs"
+    "introspect": "node --import ./scripts/ts-register.mjs scripts/introspect.mjs",
+    "verify": "node --import ./scripts/ts-register.mjs scripts/verify.mjs",
+    "live": "node --import ./scripts/ts-register.mjs scripts/live.mjs",
+    "capture": "node --import ./scripts/ts-register.mjs scripts/capture-fixture.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.2.2",

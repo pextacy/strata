@@ -2,7 +2,7 @@
 // printed beside the colour. The ramp is normalised to this day's deepest cell,
 // which means a legend copied from another day would be wrong.
 
-import { depthCssColor } from "../render/palette.ts";
+import { depthCssColor } from "../render/palette.js";
 
 export interface DepthLegendProps {
   readonly maxDepth: number;

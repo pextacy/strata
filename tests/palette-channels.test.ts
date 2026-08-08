@@ -9,8 +9,8 @@ import {
   isTransparent,
   packRgba,
   redOf,
-} from "../src/render/palette.ts";
-import { asGround, over } from "../src/render/shareCard.ts";
+} from "../src/render/palette.js";
+import { asGround, over } from "../src/render/shareCard.js";
 
 /**
  * Which byte of a packed pixel is which.

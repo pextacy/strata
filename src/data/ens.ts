@@ -9,7 +9,7 @@
 import { createPublicClient, fallback, http, type Address } from "viem";
 import { mainnet } from "viem/chains";
 
-import { knownEnsName, rememberEnsName } from "./ensCache.ts";
+import { knownEnsName, rememberEnsName } from "./ensCache.js";
 
 /**
  * ENS lives on mainnet, and Strata has no key for it, so it reads from public

@@ -5,8 +5,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { currentDay } from "../core/day-math.ts";
-import { basepaintDayUrl } from "../data/links.ts";
+import { currentDay } from "../core/day-math.js";
+import { basepaintDayUrl } from "../data/links.js";
 import {
   MintError,
   formatEth,
@@ -14,7 +14,7 @@ import {
   isOnSale,
   saleEndsIn,
   type MintTerms,
-} from "../data/mintTerms.ts";
+} from "../data/mintTerms.js";
 import "../styles/mint.css";
 
 /**
@@ -25,7 +25,7 @@ import "../styles/mint.css";
  * them, now renders without any of it. The sale-window arithmetic that decides
  * whether this button appears at all lives in `mintTerms.ts` and costs nothing.
  */
-const chain = () => import("../data/mint.ts");
+const chain = () => import("../data/mint.js");
 
 export interface MintButtonProps {
   readonly day: number;

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { formatPixel, parsePixel, samePixel, type Pixel } from "../core/pixel.ts";
-import { liveParams, readableSearch } from "./search.ts";
+import { formatPixel, parsePixel, samePixel, type Pixel } from "../core/pixel.js";
+import { liveParams, readableSearch } from "./search.js";
 
 /**
  * `?px=x,y` holds the drilled cell, so a core sample is a link someone can send.

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { PlacementsBuilder, noAnomalies, type StrokeRecord } from "../src/core/decode.ts";
-import { concatPlacements, mergeAnomalies, placementBytes } from "../src/core/placements.ts";
-import { replay } from "../src/core/replay.ts";
+import { PlacementsBuilder, noAnomalies, type StrokeRecord } from "../src/core/decode.js";
+import { concatPlacements, mergeAnomalies, placementBytes } from "../src/core/placements.js";
+import { replay } from "../src/core/replay.js";
 
 const SIZE = 8;
 const PALETTE_LENGTH = 8;

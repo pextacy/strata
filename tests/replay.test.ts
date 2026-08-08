@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { PlacementsBuilder, strokePixelCount, type StrokeRecord } from "../src/core/decode.ts";
-import { allocLayers, dayStats, indexAtTime, replay, replayInto } from "../src/core/replay.ts";
+import { PlacementsBuilder, strokePixelCount, type StrokeRecord } from "../src/core/decode.js";
+import { allocLayers, dayStats, indexAtTime, replay, replayInto } from "../src/core/replay.js";
 
 /** Real strokes, captured by `npm run capture -- 500`. */
 const fixture = JSON.parse(

@@ -31,8 +31,8 @@ import {
   BASE_CHAIN_ID,
   REWARDS_ABI,
   REWARDS_ADDRESS,
-} from "./rewards.ts";
-import { MintError, injectedProvider, type MintTerms } from "./mintTerms.ts";
+} from "./rewards.js";
+import { MintError, injectedProvider, type MintTerms } from "./mintTerms.js";
 
 const RPC: string | undefined = import.meta.env.VITE_BASE_RPC;
 

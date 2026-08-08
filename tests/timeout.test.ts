@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DataError, REQUEST_TIMEOUT_MS, getJson, gql, isAbort } from "../src/data/client.ts";
+import { DataError, REQUEST_TIMEOUT_MS, getJson, gql, isAbort } from "../src/data/client.js";
 
 /**
  * What happens when the other end opens a connection and then says nothing.

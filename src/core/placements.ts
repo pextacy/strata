@@ -2,7 +2,7 @@
 // is refetched from the last stroke id already held rather than from stroke
 // zero; this is what puts the new pixels behind the old ones.
 
-import type { Anomalies, Placements } from "./decode.ts";
+import type { Anomalies, Placements } from "./decode.js";
 
 /**
  * `b` appended after `a`, in that order — placement order is chronological and

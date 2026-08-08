@@ -3,13 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import App from "../src/App.tsx";
-import Home from "../src/routes/Home.tsx";
-import { Scrubber } from "../src/ui/Scrubber.tsx";
-import { Section } from "../src/ui/Section.tsx";
-import { Shell } from "../src/ui/Shell.tsx";
-import { Failure, LoadingDay, Nothing } from "../src/ui/states.tsx";
-import { initialProgress } from "../src/data/day.ts";
+import App from "../src/App.js";
+import Home from "../src/routes/Home.js";
+import { Scrubber } from "../src/ui/Scrubber.js";
+import { Section } from "../src/ui/Section.js";
+import { Shell } from "../src/ui/Shell.js";
+import { Failure, LoadingDay, Nothing } from "../src/ui/states.js";
+import { initialProgress } from "../src/data/day.js";
 
 /**
  * A page that typechecks can still throw on its first render. This mounts the
@@ -64,7 +64,7 @@ describe("Shell", () => {
   const footerWith = async (repo: string): Promise<string> => {
     vi.resetModules();
     vi.stubEnv("VITE_REPO_URL", repo);
-    const { Shell: Fresh } = await import("../src/ui/Shell.tsx");
+    const { Shell: Fresh } = await import("../src/ui/Shell.js");
     return renderToStaticMarkup(
       <MemoryRouter>
         <Fresh>

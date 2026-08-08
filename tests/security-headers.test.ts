@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { CSP, assetHeaders, documentHeaders } from "../api/_lib/security.ts";
+import { CSP, assetHeaders, documentHeaders } from "../api/_lib/security.js";
 
 /**
  * The policy exists twice — once in `api/_lib/security.ts`, for the documents

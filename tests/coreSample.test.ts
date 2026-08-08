@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { bandsUpTo, coreSample, isOnCanvas } from "../src/core/coreSample.ts";
-import { PlacementsBuilder, strokePixelCount, type StrokeRecord } from "../src/core/decode.ts";
-import { indexAtTime, replay } from "../src/core/replay.ts";
+import { bandsUpTo, coreSample, isOnCanvas } from "../src/core/coreSample.js";
+import { PlacementsBuilder, strokePixelCount, type StrokeRecord } from "../src/core/decode.js";
+import { indexAtTime, replay } from "../src/core/replay.js";
 
 /** Real strokes, captured by `npm run capture -- 500`. */
 const fixture = JSON.parse(

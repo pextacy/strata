@@ -7,17 +7,17 @@
 import { useEffect, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { aggregateSurvival, emptyLifetime, type OverpaintTally } from "../core/survival.ts";
-import { checksumAddress } from "../data/address.ts";
-import type { ArtistDayGap, ArtistDayRow } from "../data/artist.ts";
-import { basepaintUrl } from "../data/links.ts";
-import { useArtist } from "../data/useArtist.ts";
-import type { AccountRecord } from "../data/queries.ts";
-import { Address } from "../ui/Address.tsx";
-import { PixelText } from "../ui/PixelText.tsx";
-import { Stat } from "../ui/Stat.tsx";
-import { Failure, Nothing } from "../ui/states.tsx";
-import { useDocumentTitle } from "../ui/useDocumentTitle.ts";
+import { aggregateSurvival, emptyLifetime, type OverpaintTally } from "../core/survival.js";
+import { checksumAddress } from "../data/address.js";
+import type { ArtistDayGap, ArtistDayRow } from "../data/artist.js";
+import { basepaintUrl } from "../data/links.js";
+import { useArtist } from "../data/useArtist.js";
+import type { AccountRecord } from "../data/queries.js";
+import { Address } from "../ui/Address.js";
+import { PixelText } from "../ui/PixelText.js";
+import { Stat } from "../ui/Stat.js";
+import { Failure, Nothing } from "../ui/states.js";
+import { useDocumentTitle } from "../ui/useDocumentTitle.js";
 import "../styles/parts.css";
 import "../styles/day.css";
 import "../styles/artist.css";
