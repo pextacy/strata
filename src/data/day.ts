@@ -5,9 +5,9 @@
 
 import { get as idbGet, set as idbSet } from "idb-keyval";
 
-import type { Anomalies, Placements } from "../core/decode.ts";
+import { noAnomalies, type Anomalies, type Placements } from "../core/decode.ts";
 import { isDayOpen } from "../core/day-math.ts";
-import type { DayStats, Layers } from "../core/replay.ts";
+import { dayStats, replay, type DayStats, type Layers } from "../core/replay.ts";
 import { toRgba } from "../render/palette.ts";
 import type {
   FailedMessage,
@@ -21,7 +21,7 @@ import { DataError } from "./client.ts";
 import { fetchTheme, type Theme } from "./theme.ts";
 
 /** Bump this whenever the decoder or the cached shape changes. */
-export const CACHE_VERSION = 1;
+export const CACHE_VERSION = 2;
 
 export const cacheKey = (day: number): string => `day:${day}:v${CACHE_VERSION}`;
 
@@ -93,9 +93,43 @@ export async function loadDay(day: number, options: LoadDayOptions = {}): Promis
     return remember({ ...held, source: "memory" });
   }
 
-  onProgress?.(start("theme"));
-  const theme = await fetchTheme(day, { signal });
+  // The stored copy is read before anything is asked of the network, because it
+  // carries the theme as well as the strokes. A closed day's palette and size
+  // are as settled as its pixels — they are what it was painted with — so a
+  // second visit reaches the canvas without a round trip. Bumping
+  // CACHE_VERSION is what invalidates them if that ever stops being true.
+  const cached = held !== undefined || open || refresh ? null : await readCache(day);
   throwIfAborted(signal);
+
+  if (cached === null) onProgress?.(start("theme"));
+  const theme = cached?.theme ?? (await fetchTheme(day, { signal }));
+  throwIfAborted(signal);
+
+  // The stored copy is already decoded, so all that is left is one replay pass:
+  // about four milliseconds on the heaviest day there has ever been. Handing
+  // that to a worker means fetching and compiling its module, then two
+  // structured clones, before any of it can start — measured at half a second
+  // on a cold page against four milliseconds of arithmetic. The worker earns its
+  // keep on the network path, where hundreds of thousands of strokes have to be
+  // fetched and decoded; it does not earn it here.
+  if (cached !== null) {
+    onProgress?.(start("cache"));
+    const layers = replay(cached.placements, theme.size);
+    return remember({
+      day,
+      theme,
+      size: theme.size,
+      palette: theme.palette,
+      rgba: toRgba(theme.palette),
+      placements: cached.placements,
+      layers,
+      stats: dayStats(layers, cached.placements),
+      anomalies: cached.anomalies ?? noAnomalies(),
+      lastId: cached.lastId,
+      open,
+      source: "cache",
+    });
+  }
 
   let request: WorkerRequest;
   let source: Exclude<DaySource, "memory">;
@@ -114,33 +148,17 @@ export async function loadDay(day: number, options: LoadDayOptions = {}): Promis
     };
     source = "network";
   } else {
-    const cached = open || refresh ? null : await readCache(day, theme.size);
-    throwIfAborted(signal);
-    if (cached !== null) {
-      onProgress?.(start("cache"));
-      request = {
-        type: "replay",
-        requestId: nextRequestId(),
-        day,
-        size: theme.size,
-        placements: cached.placements,
-        anomalies: cached.anomalies,
-        lastId: cached.lastId,
-      };
-      source = "cache";
-    } else {
-      request = {
-        type: "load",
-        requestId: nextRequestId(),
-        day,
-        size: theme.size,
-        paletteLength: theme.palette.length,
-        known: null,
-        knownAnomalies: null,
-        knownLastId: null,
-      };
-      source = "network";
-    }
+    request = {
+      type: "load",
+      requestId: nextRequestId(),
+      day,
+      size: theme.size,
+      paletteLength: theme.palette.length,
+      known: null,
+      knownAnomalies: null,
+      knownLastId: null,
+    };
+    source = "network";
   }
 
   const ready = await runWorker(request, signal, (progress) => {
@@ -195,6 +213,8 @@ interface CachedDay {
   readonly version: number;
   readonly day: number;
   readonly size: number;
+  /** What the day was painted with. Kept so a revisit needs no network at all. */
+  readonly theme: Theme;
   readonly placements: Placements;
   readonly anomalies: Anomalies;
   readonly lastId: string | null;
@@ -204,7 +224,7 @@ interface CachedDay {
  * A cache read never fails the page. Private-mode browsers, a full disk, and a
  * changed schema all mean the same thing here: fetch it again.
  */
-async function readCache(day: number, size: number): Promise<CachedDay | null> {
+async function readCache(day: number): Promise<CachedDay | null> {
   let record: CachedDay | undefined;
   try {
     record = await idbGet<CachedDay>(cacheKey(day));
@@ -212,8 +232,14 @@ async function readCache(day: number, size: number): Promise<CachedDay | null> {
     return null;
   }
   if (record === undefined) return null;
-  if (record.version !== CACHE_VERSION || record.day !== day || record.size !== size) return null;
+  if (record.version !== CACHE_VERSION || record.day !== day) return null;
   if (typeof record.placements !== "object" || record.placements === null) return null;
+  // A record whose theme disagrees with its own buffers is one this code never
+  // wrote. Fetching it again costs a round trip; trusting it draws the wrong
+  // canvas at the wrong size.
+  const theme = record.theme;
+  if (typeof theme !== "object" || theme === null) return null;
+  if (theme.size !== record.size || !Array.isArray(theme.palette)) return null;
   return record;
 }
 
@@ -222,6 +248,7 @@ async function writeCache(data: DayData): Promise<void> {
     version: CACHE_VERSION,
     day: data.day,
     size: data.size,
+    theme: data.theme,
     placements: data.placements,
     anomalies: data.anomalies,
     lastId: data.lastId,

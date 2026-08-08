@@ -9,12 +9,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { aggregateSurvival, emptyLifetime, type OverpaintTally } from "../core/survival.ts";
 import { checksumAddress } from "../data/address.ts";
-import { REPLAY_DAYS, type ArtistDayGap, type ArtistDayRow } from "../data/artist.ts";
-import { basepaintUrl, BEACON_URL } from "../data/links.ts";
+import type { ArtistDayGap, ArtistDayRow } from "../data/artist.ts";
+import { basepaintUrl } from "../data/links.ts";
 import { useArtist } from "../data/useArtist.ts";
 import type { AccountRecord } from "../data/queries.ts";
 import { Address } from "../ui/Address.tsx";
 import { Stat } from "../ui/Stat.tsx";
+import { Failure, Nothing } from "../ui/states.tsx";
+import { useDocumentTitle } from "../ui/useDocumentTitle.ts";
+import "../styles/parts.css";
 import "../styles/day.css";
 import "../styles/artist.css";
 
@@ -35,6 +38,10 @@ export default function Artist() {
   const raw = (params.address ?? "").trim();
   const address = checksumAddress(raw);
   const { state, reload } = useArtist(address);
+
+  useDocumentTitle(
+    address === null ? "Not an address — Strata" : `${shorten(address)} — Strata`,
+  );
 
   // Keep one spelling of an address in the address bar, so two links to the
   // same artist are the same link.
@@ -63,28 +70,29 @@ export default function Artist() {
 
   if (address === null) {
     return (
-      <main className="excavation artist">
-        <Crumb />
+      <div className="page artist">
         <h1>That is not an address</h1>
-        <p role="alert" className="notice notice-bad">
-          {raw === ""
-            ? "This link is missing an address. Artist pages look like /artist/0x…"
-            : `“${raw}” is not an Ethereum address. Strata expects the 42-character form beginning 0x.`}{" "}
+        <Failure
+          message={
+            raw === ""
+              ? "This link is missing an address. Artist pages look like /artist/0x…"
+              : `“${raw}” is not an Ethereum address. Strata expects the 42-character form beginning 0x.`
+          }
+        >
           <Link to="/">Start from today</Link>
-        </p>
-        <Foot />
-      </main>
+        </Failure>
+      </div>
     );
   }
 
   const account = state.status === "ready" ? state.profile.account : null;
   const totalDays = state.status === "ready" ? state.profile.totalDays : null;
   const neverPainted = state.status === "ready" && state.profile.requested.length === 0;
+  /** Days Strata set out to rebuild, which is not always the number it managed. */
+  const asked = state.status === "ready" ? state.profile.requested.length : null;
 
   return (
-    <main className="excavation artist">
-      <Crumb />
-
+    <div className="page artist">
       <header className="day-head">
         <h1 className="artist-name">
           <Address address={address} keep={6} />
@@ -93,20 +101,14 @@ export default function Artist() {
       </header>
 
       {state.status === "failed" && (
-        <p role="alert" className="notice notice-bad">
-          {state.message}{" "}
-          <button type="button" onClick={reload}>
-            Try again
-          </button>
-          {state.detail !== undefined && <small className="detail">{state.detail}</small>}
-        </p>
+        <Failure message={state.message} detail={state.detail} onRetry={reload} />
       )}
 
       {neverPainted && (
-        <p role="status" className="notice">
+        <Nothing>
           This address has never painted a BasePaint canvas. Nothing of theirs is buried
           anywhere. <a href={basepaintUrl()}>Painting happens at basepaint.xyz</a>.
-        </p>
+        </Nothing>
       )}
 
       {state.status === "loading" && (
@@ -135,13 +137,17 @@ export default function Artist() {
                 of the cells they painted still carry their colour
               </span>
             </p>
+            {/* The scope has to survive a day that failed to rebuild. Saying
+                "across 8 days — the most recent 10" in one breath is the kind of
+                small contradiction that makes a reader stop trusting the big
+                number above it, so both figures come from what actually landed. */}
             <p className="survival-scope">
               Measured across {lifetime.days} {lifetime.days === 1 ? "day" : "days"}
+              {asked !== null && asked > lifetime.days && <> of the {asked} asked for</>}
               {totalDays !== null && totalDays > 0 && (
                 <>
                   {" "}
-                  — the most recent {Math.min(REPLAY_DAYS, totalDays)} this address painted, of{" "}
-                  {count.format(totalDays)} in all
+                  — the most recent this address painted, of {count.format(totalDays)} in all
                 </>
               )}
               . Strata rebuilds those canvases in the browser; days it has not replayed are not
@@ -202,19 +208,11 @@ export default function Artist() {
       )}
 
       {account !== null && <IndexerTotals account={account} />}
-
-      <Foot />
-    </main>
+    </div>
   );
 }
 
-function Crumb() {
-  return (
-    <p className="crumb">
-      <Link to="/">Strata</Link>
-    </p>
-  );
-}
+const shorten = (address: string): string => `${address.slice(0, 6)}…${address.slice(-4)}`;
 
 function TallyList({
   title,
@@ -358,14 +356,5 @@ function IndexerTotals({ account }: { account: AccountRecord }) {
         </p>
       )}
     </section>
-  );
-}
-
-function Foot() {
-  return (
-    <footer className="day-foot">
-      <a href={basepaintUrl()}>Paint at basepaint.xyz</a>
-      <img src={BEACON_URL} width={1} height={1} alt="" />
-    </footer>
   );
 }

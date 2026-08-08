@@ -19,18 +19,13 @@ export interface LoadRequest {
   readonly knownLastId: string | null;
 }
 
-/** Replay placements that are already complete — the warm cache path. */
-export interface ReplayRequest {
-  readonly type: "replay";
-  readonly requestId: number;
-  readonly day: number;
-  readonly size: number;
-  readonly placements: Placements;
-  readonly anomalies: Anomalies | null;
-  readonly lastId: string | null;
-}
-
-export type WorkerRequest = LoadRequest | ReplayRequest;
+/**
+ * The worker exists for one job: fetching and decoding hundreds of thousands of
+ * strokes without dropping a frame. Replaying placements that are already
+ * decoded is four milliseconds of arithmetic and stays on the main thread, where
+ * it costs less than starting a worker to do it.
+ */
+export type WorkerRequest = LoadRequest;
 
 export type LoadPhase = "fetching" | "replaying";
 

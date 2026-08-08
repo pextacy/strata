@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { formatPixel, parsePixel, samePixel, type Pixel } from "../core/pixel.ts";
+import { liveParams, readableSearch } from "./search.ts";
 
 /**
  * `?px=x,y` holds the drilled cell, so a core sample is a link someone can send.
@@ -19,16 +20,6 @@ export interface PixelParam {
   /** Pins a cell. `null` clears the selection and drops `?px=` from the URL. */
   readonly select: (pixel: Pixel | null) => void;
 }
-
-/**
- * `URLSearchParams` percent-encodes the comma. It does not have to: a comma is
- * a legal sub-delimiter in a query, and `?px=91,204` is a link a person can read
- * out loud. Both forms parse; only one is worth sharing.
- */
-const search = (params: URLSearchParams): string => {
-  const query = params.toString().replaceAll("%2C", ",");
-  return query === "" ? "" : `?${query}`;
-};
 
 export function usePixelParam(size: number): PixelParam {
   const [searchParams] = useSearchParams();
@@ -61,9 +52,9 @@ export function usePixelParam(size: number): PixelParam {
   useEffect(() => {
     if (size === 0 || raw === null || fromUrl !== null) return;
     const { navigate: go, pathname, searchParams: current } = writeRef.current;
-    const next = new URLSearchParams(current);
+    const next = liveParams(current);
     next.delete(PARAM);
-    go({ pathname, search: search(next) }, { replace: true });
+    go({ pathname, search: readableSearch(next) }, { replace: true });
   }, [raw, fromUrl, size]);
 
   const select = useCallback((pixel: Pixel | null) => {
@@ -71,13 +62,13 @@ export function usePixelParam(size: number): PixelParam {
     writtenRef.current = pixel;
 
     const { navigate: go, pathname, searchParams: current } = writeRef.current;
-    const next = new URLSearchParams(current);
+    const next = liveParams(current);
     if (pixel === null) next.delete(PARAM);
     else next.set(PARAM, formatPixel(pixel));
 
     // Drilling is a lens on the same canvas, not a new place. It survives a
     // reload; it does not deserve a back-button step of its own.
-    go({ pathname, search: search(next) }, { replace: true });
+    go({ pathname, search: readableSearch(next) }, { replace: true });
   }, []);
 
   return { selected: pinned, select };

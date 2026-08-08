@@ -94,7 +94,13 @@ export function coreSample(
  * of the day. `upTo` is a placement index — the same one `indexAtTime` returns.
  */
 export function bandsUpTo(sample: CoreSampleResult, upTo: number): readonly Band[] {
-  if (upTo >= sample.bands.length) return sample.bands;
+  const all = sample.bands;
+  // `upTo` counts placements in the whole day, not bands on this cell — a cell
+  // painted nineteen times can hold band indices in the hundreds of thousands.
+  // Comparing it against `all.length` shortcut every real scrub straight back to
+  // the finished stack, which is the day's last frame wearing an earlier time.
+  if (all.length === 0 || upTo >= all[all.length - 1].index) return all;
+
   const kept: Band[] = [];
   for (const band of sample.bands) {
     if (band.index > upTo) break;

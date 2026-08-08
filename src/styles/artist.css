@@ -1,6 +1,6 @@
-/* The artist page. Page chrome — crumb, stat grid, notices, footer — is shared
-   with the day view and comes from day.css; only what is new to this page is
-   here. The survival rate is the loudest thing on it, because it is the one
+/* The artist page. The stat grid, the notices and the progress line are shared
+   with every other page and come from parts.css; only what is new to this page
+   is here. The survival rate is the loudest thing on it, because it is the one
    number nowhere else has. */
 
 .artist .artist-name {

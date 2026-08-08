@@ -1,0 +1,99 @@
+/* The landing page. One sentence of what this is, then the painting. */
+
+.home-lede {
+  margin: 0 0 0.35rem;
+  max-width: 38rem;
+  color: var(--muted);
+}
+
+.home-title {
+  color: var(--fg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: var(--step-2);
+  line-height: 1.1;
+}
+
+.home-theme {
+  color: var(--accent);
+  font-size: var(--step-1);
+}
+
+.home-status {
+  margin: 0.15rem 0 0;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+
+.home-canvas {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 12rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.home-canvas-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.home-below {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.home-recent-title {
+  margin: 0 0 0.5rem;
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.home-recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+
+.home-recent-list a {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.home-recent-list a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 30rem) {
+  .home-canvas {
+    padding: 0.5rem;
+  }
+
+  .home-stats {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+}

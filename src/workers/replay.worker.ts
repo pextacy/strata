@@ -9,13 +9,7 @@ import type { Anomalies, Placements } from "../core/decode.ts";
 import { concatPlacements, mergeAnomalies } from "../core/placements.ts";
 import { dayStats, replay } from "../core/replay.ts";
 import { fetchDayStrokes } from "../data/queries.ts";
-import type {
-  LoadRequest,
-  ReadyMessage,
-  ReplayRequest,
-  WorkerRequest,
-  WorkerResponse,
-} from "./protocol.ts";
+import type { LoadRequest, ReadyMessage, WorkerRequest, WorkerResponse } from "./protocol.ts";
 
 // lib.dom is what this project compiles against, so the worker global is typed
 // by hand instead of pulling in lib.webworker, which redeclares half of it.
@@ -32,7 +26,7 @@ scope.addEventListener("message", (event) => {
 
 async function handle(request: WorkerRequest): Promise<void> {
   try {
-    const ready = request.type === "replay" ? runReplay(request) : await runLoad(request);
+    const ready = await runLoad(request);
     scope.postMessage(ready, transferables(ready));
   } catch (error) {
     scope.postMessage(describe(request, error));
@@ -90,18 +84,6 @@ async function runLoad(request: LoadRequest): Promise<ReadyMessage> {
     anomalies,
     lastId === null ? knownLastId : lastId.toString(),
     strokes,
-  );
-}
-
-function runReplay(request: ReplayRequest): ReadyMessage {
-  return finish(
-    request.requestId,
-    request.day,
-    request.size,
-    request.placements,
-    request.anomalies ?? noAnomalies(),
-    request.lastId,
-    0,
   );
 }
 

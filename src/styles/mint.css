@@ -1,0 +1,71 @@
+/* The mint sits under the day's numbers, states its price, and is the only
+   thing on the page allowed to look like a call to action. */
+
+.mint {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-raised);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  max-width: 36rem;
+}
+
+.mint-line {
+  margin: 0;
+  font-size: var(--step--1);
+}
+
+.mint-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.mint-count {
+  display: grid;
+  gap: 0.15rem;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+
+.mint-count input {
+  width: 5rem;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.mint-go {
+  padding: 0.4rem 1.1rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+.mint-go:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: progress;
+}
+
+.mint-note {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.mint-good {
+  color: var(--accent);
+}
+
+.mint-bad {
+  color: var(--danger);
+}

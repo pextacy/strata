@@ -1,32 +1,40 @@
-// /day/:day — the excavation view. The canvas at the top, the four ways to read
-// it directly under, the day's own numbers below that. Mode lives in the URL, so
-// every view here is a link someone can send.
+// /day/:day — the excavation view, and the page every other one leads to.
+//
+// The canvas at the top, the day's own time band directly under it, the core
+// sample as a column beside it, and the numbers below. Mode, moment and drilled
+// pixel all live in the URL, so any state of this page is a link someone can
+// send.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
-import { coreSample } from "../core/coreSample.ts";
+import { bandsUpTo, coreSample } from "../core/coreSample.ts";
+import { DAY_DURATION } from "../core/constants.ts";
 import { currentDay, dayStart, isDayOpen } from "../core/day-math.ts";
 import { hasAnomalies } from "../core/decode.ts";
 import type { Pixel } from "../core/pixel.ts";
-import { basepaintDayUrl, basepaintUrl, BEACON_URL } from "../data/links.ts";
+import { basepaintDayUrl } from "../data/links.ts";
 import { useDay } from "../data/useDay.ts";
-import type { DayData, DayProgress } from "../data/day.ts";
-import {
-  DEFAULT_VIEW_MODE,
-  MODE_COPY,
-  isViewMode,
-  layerImageData,
-  readViewMode,
-  type ViewMode,
-} from "../render/layers.ts";
+import { initialProgress, type DayData } from "../data/day.ts";
+import { MODE_COPY } from "../render/layers.ts";
 import { Address } from "../ui/Address.tsx";
 import { CanvasView } from "../ui/CanvasView.tsx";
 import { CoreSample } from "../ui/CoreSample.tsx";
 import { DepthLegend } from "../ui/DepthLegend.tsx";
+import { MintButton } from "../ui/MintButton.tsx";
 import { ModeSwitch } from "../ui/ModeSwitch.tsx";
+import { Scrubber } from "../ui/Scrubber.tsx";
+import { Section } from "../ui/Section.tsx";
 import { Stat } from "../ui/Stat.tsx";
+import { Failure, LoadingDay, Nothing } from "../ui/states.tsx";
+import { useDocumentTitle } from "../ui/useDocumentTitle.ts";
+import { useLayerImage } from "../ui/useLayerImage.ts";
 import { usePixelParam } from "../ui/usePixelParam.ts";
+import { usePlayback } from "../ui/usePlayback.ts";
+import { useTimeParam } from "../ui/useTimeParam.ts";
+import { useActivity, useTimeline } from "../ui/useTimeline.ts";
+import { useViewMode } from "../ui/useViewMode.ts";
+import "../styles/parts.css";
 import "../styles/day.css";
 
 const count = new Intl.NumberFormat("en-US");
@@ -34,7 +42,12 @@ const count = new Intl.NumberFormat("en-US");
 const utcTime = (unixSec: number): string =>
   `${new Date(unixSec * 1000).toISOString().slice(11, 16)} UTC`;
 
-type ParsedDay = { readonly ok: true; readonly day: number } | { readonly ok: false; readonly message: string };
+/** How often a page open on today's canvas notices that the day has moved on. */
+const TICK_MS = 30_000;
+
+type ParsedDay =
+  | { readonly ok: true; readonly day: number }
+  | { readonly ok: false; readonly message: string };
 
 function parseDay(raw: string | undefined): ParsedDay {
   const value = (raw ?? "").trim();
@@ -58,46 +71,69 @@ function parseDay(raw: string | undefined): ParsedDay {
 
 export default function Day() {
   const params = useParams<{ day?: string }>();
-  const [search, setSearch] = useSearchParams();
-
   const parsed = parseDay(params.day);
-  const mode = readViewMode(search.get("mode"));
-  const { state, reload } = useDay(parsed.ok ? parsed.day : null);
 
-  // A mode nobody recognises is dropped from the URL rather than left there
-  // pointing at a view that is not on screen.
-  const rawMode = search.get("mode");
-  useEffect(() => {
-    if (rawMode === null || isViewMode(rawMode)) return;
-    const next = new URLSearchParams(search);
-    next.delete("mode");
-    setSearch(next, { replace: true });
-  }, [rawMode, search, setSearch]);
+  // Hooks cannot be conditional, so an unparseable day loads nothing and the
+  // page renders its own sentence at the bottom of this function.
+  return parsed.ok ? <Excavation day={parsed.day} /> : <BadDay message={parsed.message} />;
+}
 
-  const setMode = useCallback(
-    (next: ViewMode) => {
-      const params = new URLSearchParams(search);
-      // Final is the default, so it stays out of the URL and the plain
-      // /day/500 link keeps working as the canonical one.
-      if (next === DEFAULT_VIEW_MODE) params.delete("mode");
-      else params.set("mode", next);
-      // A mode is a lens on the same page, not a new place: it does not deserve
-      // a back-button step, but it does survive a reload.
-      setSearch(params, { replace: true });
-    },
-    [search, setSearch],
-  );
-
+function Excavation({ day }: { readonly day: number }) {
+  const { state, reload } = useDay(day);
   const data = state.status === "ready" ? state.data : null;
+  const { mode, setMode } = useViewMode();
 
-  const image = useMemo(() => {
-    if (data === null) return null;
-    return layerImageData(mode, data.layers, data.rgba, data.stats.maxDepth);
-  }, [data, mode]);
+  // --- time ----------------------------------------------------------------
+  // A finished day is a full 24 hours; today's stops at now, so the scrubber
+  // never runs out past the last stroke that exists. A tab left open on the
+  // canvas being painted keeps up rather than freezing at the minute it loaded.
+  const openedAt = dayStart(day);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const open = isDayOpen(day, now);
 
-  // The drilled cell. `?px=` holds the one someone chose; hovering only previews
-  // it, because a mouse crossing the canvas passes over hundreds of cells and
-  // none of them is a place anyone asked to be.
+  useEffect(() => {
+    if (!open) return;
+    const timer = setInterval(() => setNow(Math.floor(Date.now() / 1000)), TICK_MS);
+    return () => clearInterval(timer);
+  }, [open]);
+
+  const elapsed = open ? Math.max(0, Math.min(DAY_DURATION, now - openedAt)) : DAY_DURATION;
+
+  const placements = data?.placements ?? null;
+  const timeline = useTimeline(placements, data?.size ?? 0);
+  // The band has to cover exactly the window the handle slides over. Drawn
+  // across the full 24 hours while the scrubber stopped at `elapsed`, today's
+  // bars sat under the wrong part of the track: six hours of painting squeezed
+  // into the first quarter of a band whose right-hand end was already "now".
+  const activity = useActivity(placements, openedAt, openedAt + elapsed);
+
+  const { t, atEnd, setT } = useTimeParam(elapsed);
+  const idle = timeline === null || timeline.count === 0;
+  const playback = usePlayback({ value: t, onChange: setT, max: elapsed, disabled: idle });
+
+  // At the end of the day the replayed buffers are already in hand; only a
+  // scrub has to rebuild anything, and that reuses one scratch canvas.
+  const shown = useMemo(() => {
+    if (data === null || timeline === null) return null;
+    if (atEnd) return { layers: data.layers, strokes: timeline.count, upTo: timeline.count - 1 };
+    const strokes = timeline.countAtTime(openedAt + t);
+    return { layers: timeline.frameAt(strokes), strokes, upTo: strokes - 1 };
+  }, [data, timeline, atEnd, openedAt, t]);
+
+  const image = useLayerImage({
+    mode,
+    layers: shown?.layers ?? null,
+    rgba: data?.rgba ?? null,
+    maxDepth: data?.stats.maxDepth ?? 1,
+    // The scrub reuses one scratch canvas, so its identity never changes; the
+    // stroke count is what actually says the pixels are different.
+    revision: shown?.strokes ?? 0,
+  });
+
+  // --- the drilled cell ----------------------------------------------------
+  // `?px=` holds the one someone chose; hovering only previews it, because a
+  // mouse crossing the canvas passes over hundreds of cells and none of them is
+  // a place anyone asked to be.
   const size = data?.size ?? 0;
   const { selected, select } = usePixelParam(size);
   const [hovered, setHovered] = useState<Pixel | null>(null);
@@ -110,132 +146,136 @@ export default function Day() {
     return coreSample(data.placements, data.size, drilled.x, drilled.y);
   }, [data, drilled]);
 
-  if (!parsed.ok) {
-    return (
-      <main className="excavation">
-        <Header day={null} />
-        <p role="alert" className="notice notice-bad">
-          {parsed.message} <Link to="/">Start from today</Link>
-        </p>
-        <Footer day={null} />
-      </main>
-    );
-  }
+  // The core reads the same moment the canvas does. Scrub back an hour and the
+  // bands laid after it are gone, not greyed out.
+  const bands = useMemo(() => {
+    if (sample === null) return [];
+    if (atEnd || shown === null) return sample.bands;
+    return bandsUpTo(sample, shown.upTo);
+  }, [sample, atEnd, shown]);
 
-  const day = parsed.day;
+  useDocumentTitle(
+    data === null ? `Day ${day} — Strata` : `Day ${day}: ${data.theme.theme} — Strata`,
+  );
+
   const empty = data !== null && data.stats.placements === 0;
+  const canDraw = data !== null && image !== null && !empty;
 
   return (
-    <main className="excavation">
-      <Header day={day} theme={data?.theme.theme} open={isDayOpen(day)} />
+    <Section
+      className="excavation"
+      head={
+        <>
+          <h1>Day {day}</h1>
+          {data !== null && <p className="day-theme">{data.theme.theme}</p>}
+          <p className="day-open">
+            {open
+              ? "Still being painted — this canvas is not final."
+              : `Closed. Opened at ${utcTime(openedAt)}, and final since.`}
+          </p>
+        </>
+      }
+      canvas={
+        <section className="canvas-panel" aria-label={`Day ${day} canvas`}>
+          {canDraw ? (
+            <CanvasView
+              image={image}
+              size={data.size}
+              label={`Day ${day}, ${MODE_COPY[mode].label.toLowerCase()} view, rebuilt from the on-chain strokes`}
+              pick={{
+                selected,
+                hovered,
+                onHover: setHovered,
+                onSelect: (pixel) => {
+                  setHovered(null);
+                  select(pixel);
+                },
+              }}
+            />
+          ) : (
+            <div className="canvas-frame canvas-frame-empty">
+              {(state.status === "idle" || state.status === "loading") && (
+                <LoadingDay
+                  day={day}
+                  progress={state.status === "loading" ? state.progress : initialProgress()}
+                />
+              )}
+              {state.status === "failed" && (
+                <Failure message={state.message} detail={state.detail} onRetry={reload}>
+                  <a href={basepaintDayUrl(day)}>See it on basepaint.xyz instead</a>
+                </Failure>
+              )}
+              {empty && (
+                <Nothing onRetry={reload}>
+                  Nothing has been painted on day {day} yet. The canvas opened at{" "}
+                  {utcTime(openedAt)}.
+                </Nothing>
+              )}
+            </div>
+          )}
+        </section>
+      }
+      axis={
+        <Scrubber
+          value={t}
+          max={elapsed}
+          onChange={setT}
+          activity={activity}
+          strokesShown={shown?.strokes}
+          strokesTotal={timeline?.count}
+          playing={playback.playing}
+          onPlayToggle={playback.toggle}
+          dayOpen={open}
+          disabled={idle}
+        />
+      }
+      column={
+        <CoreSample
+          pixel={drilled}
+          bands={bands}
+          artists={data?.placements.artists ?? []}
+          palette={data?.palette ?? []}
+          openedAt={openedAt}
+          loading={data === null && state.status !== "failed"}
+          laterBands={sample === null ? 0 : sample.bands.length - bands.length}
+          preview={hovered !== null}
+        />
+      }
+      below={
+        <div className="excavation-below">
+          <ModeSwitch mode={mode} onChange={setMode} disabled={!canDraw} />
 
-      <div className="excavation-dig">
-      <section className="canvas-panel" aria-label={`Day ${day} canvas`}>
-        {data !== null && image !== null && !empty ? (
-          <CanvasView
-            image={image}
-            size={data.size}
-            label={`Day ${day}, ${MODE_COPY[mode].label.toLowerCase()} view, rebuilt from the on-chain strokes`}
-            pick={{
-              selected,
-              hovered,
-              onHover: setHovered,
-              onSelect: (pixel) => {
-                setHovered(null);
-                select(pixel);
-              },
-            }}
-          />
-        ) : (
-          <div className="canvas-frame canvas-frame-empty">
-            {state.status === "loading" && <Loading progress={state.progress} day={day} />}
-            {state.status === "failed" && (
-              <p role="alert" className="notice notice-bad">
-                {state.message}{" "}
-                <button type="button" onClick={reload}>
-                  Try again
-                </button>
-                {state.detail !== undefined && <small className="detail">{state.detail}</small>}
-              </p>
-            )}
-            {empty && (
-              <p role="status" className="notice">
-                Nothing has been painted on day {day} yet. The canvas opened at{" "}
-                {utcTime(dayStart(day))}.{" "}
-                <button type="button" onClick={reload}>
-                  Check again
-                </button>
-              </p>
-            )}
-          </div>
-        )}
-      </section>
+          {mode === "depth" && data !== null && <DepthLegend maxDepth={data.stats.maxDepth} />}
 
-        {data !== null && !empty && (
-          <CoreSample
-            pixel={drilled}
-            bands={sample?.bands ?? []}
-            artists={data.placements.artists}
-            palette={data.palette}
-            openedAt={dayStart(day)}
-            preview={hovered !== null}
-          />
-        )}
-      </div>
+          {/* Only on screen while the contract still has this canvas on sale. */}
+          <MintButton day={day} />
 
-      <ModeSwitch mode={mode} onChange={setMode} disabled={data === null} />
+          {data !== null && !empty && <DayNumbers data={data} />}
 
-      {mode === "depth" && data !== null && <DepthLegend maxDepth={data.stats.maxDepth} />}
-
-      {data !== null && !empty && <DayNumbers data={data} />}
-
-      <Footer day={day} />
-    </main>
+          <p className="day-elsewhere">
+            <a href={basepaintDayUrl(day)}>See day {day} on basepaint.xyz</a>
+          </p>
+        </div>
+      }
+    />
   );
 }
 
-function Header({ day, theme, open }: { day: number | null; theme?: string; open?: boolean }) {
-  return (
-    <header className="day-head">
-      <p className="crumb">
-        <Link to="/">Strata</Link>
-      </p>
-      <h1>{day === null ? "That day does not exist" : `Day ${day}`}</h1>
-      {theme !== undefined && <p className="day-theme">{theme}</p>}
-      {open === true && (
-        <p className="day-open">Still being painted — this canvas is not final.</p>
-      )}
-    </header>
-  );
-}
-
-function Loading({ progress, day }: { progress: DayProgress; day: number }) {
-  const { phase, strokes, pixels, totalStrokes, resuming } = progress;
-
-  const line =
-    phase === "theme"
-      ? `Asking basepaint.xyz for the day ${day} palette…`
-      : phase === "cache"
-        ? `Rebuilding day ${day} from the copy stored on this device…`
-        : phase === "replaying"
-          ? `Stacking ${count.format(pixels)} placements…`
-          : resuming
-            ? `Catching up on today's canvas — ${count.format(strokes)} new strokes read.`
-            : `Reading the chain — ${count.format(strokes)}${
-                totalStrokes > 0 ? ` of ${count.format(totalStrokes)}` : ""
-              } strokes, ${count.format(pixels)} pixels decoded.`;
+/** A day number that is not one. Said in words, with the way back. */
+function BadDay({ message }: { readonly message: string }) {
+  useDocumentTitle("No such day — Strata");
 
   return (
-    <div className="loading" role="status">
-      <p>{line}</p>
-      {phase === "fetching" && totalStrokes > 0 && (
-        <progress className="loading-bar" value={Math.min(strokes, totalStrokes)} max={totalStrokes} />
-      )}
+    <div className="page">
+      <h1>That day does not exist</h1>
+      <Failure message={message}>
+        <Link to="/">Start from today</Link>
+      </Failure>
     </div>
   );
 }
 
-function DayNumbers({ data }: { data: DayData }) {
+function DayNumbers({ data }: { readonly data: DayData }) {
   const { stats, placements, size, palette, theme, anomalies } = data;
   const cells = size * size;
   const coverage = cells === 0 ? 0 : (stats.paintedCells / cells) * 100;
@@ -312,16 +352,5 @@ function DayNumbers({ data }: { data: DayData }) {
         </p>
       )}
     </section>
-  );
-}
-
-function Footer({ day }: { day: number | null }) {
-  return (
-    <footer className="day-foot">
-      <a href={day === null ? basepaintUrl() : basepaintDayUrl(day)}>
-        {day === null ? "Paint at basepaint.xyz" : `See day ${day} on basepaint.xyz`}
-      </a>
-      <img src={BEACON_URL} width={1} height={1} alt="" />
-    </footer>
   );
 }

@@ -1,0 +1,78 @@
+/* The geological section. Grid areas rather than nesting, so the time band sits
+   exactly under the canvas and the core sample column can run the full height of
+   both without either one knowing about the other. */
+
+.section {
+  max-width: min(72rem, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 0;
+  display: grid;
+  gap: 1rem 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "canvas"
+    "axis"
+    "column"
+    "below";
+}
+
+/* The column only earns its own track once there is room for the canvas to stay
+   large next to it. Below that, everything reads downward in one lane. */
+@media (min-width: 62rem) {
+  .section.has-column {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-areas:
+      "head   head"
+      "canvas column"
+      "axis   column"
+      "below  below";
+    align-items: start;
+  }
+}
+
+.section-head {
+  grid-area: head;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.section-canvas {
+  grid-area: canvas;
+  min-width: 0;
+}
+
+.section-axis {
+  grid-area: axis;
+  min-width: 0;
+}
+
+.section-column {
+  grid-area: column;
+  min-width: 0;
+  align-self: stretch;
+}
+
+@media (min-width: 62rem) {
+  .section-column {
+    position: sticky;
+    /* Clears the sticky header. */
+    top: 3.5rem;
+    max-height: calc(100vh - 5rem);
+    overflow: auto;
+  }
+}
+
+.section-below {
+  grid-area: below;
+  min-width: 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 30rem) {
+  .section {
+    padding: 1rem 0.75rem 0;
+    gap: 0.85rem;
+  }
+}

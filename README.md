@@ -21,7 +21,11 @@ A BasePaint canvas is painted by hundreds of people over 24 hours, and pixels ge
 
 **Artist survival.** For one address: pixels placed, cells touched, cells still holding their colour, and the survival rate between them — plus who covered them most and who they covered most. The lifetime figure states in words which days it covers, because a number with an honest scope beats one that quietly lies.
 
-**Everything is in the URL.** Day, view mode, scrub position and selected pixel: `/day/500?mode=ghost&px=236,56&t=18400` reloads to exactly what you were looking at.
+**Time.** Under every canvas is a band of the day itself, one bar per fifteen minutes, tall where the day was busy. Drag it and the canvas rebuilds to that moment — and so does the core sample, which drops the bands that had not been laid yet. Today's canvas scrubs across however much of the day has happened.
+
+**Everything is in the URL.** Day, view mode, scrub position and selected pixel: `/day/500?mode=ghost&px=236,56&t=18400` reloads to exactly what you were looking at. Links unfurl with a card drawn from the same replay the page runs, so the picture in the preview is never one the app disagrees with.
+
+**Minting, where it belongs.** A canvas is on sale for one day after it closes, and the person reading its provenance is the person most likely to want it. While that window is open — read from the contract, not from the clock — the day page offers the mint, through `BasePaintRewards` so the referral share is paid on chain.
 
 ## Correctness
 
@@ -82,6 +86,7 @@ Every variable is optional; copy `.env.example` to `.env.local` to set any of th
 - `VITE_REFERRER_ADDRESS` — every BasePaint link Strata emits carries this as `?referrer=`, which earns half the protocol fee on mints it refers. Unset, the links still work, just unattributed.
 - `VITE_REPO_URL` — the footer links to the source when this is set, and says nothing when it is not.
 - `VITE_MAINNET_RPC` — used only to turn addresses into ENS names. Unset, Strata falls back to public endpoints; an address that will not resolve simply stays an address.
+- `VITE_BASE_RPC` — reads the open-edition price and which canvas is on sale, and sends the mint. Unset, viem's default Base endpoint is used, which is rate limited but works.
 
 ### Deploying
 

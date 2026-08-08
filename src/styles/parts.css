@@ -1,0 +1,245 @@
+/* The pieces every page is built from: the canvas panel, the mode switch, the
+   depth legend, the stat grid, the notices.
+
+   These lived in day.css scoped to .excavation, so they would not fight the
+   phase 0 page while both were on disk. That page is gone, and the landing page,
+   the day view and the artist record all draw the same parts — so they are
+   stated once, here, and each page's own file holds only what is particular to
+   it. */
+
+/* --- canvas --------------------------------------------------------------- */
+
+.canvas-panel {
+  display: flex;
+  justify-content: center;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  min-height: 12rem;
+}
+
+.canvas-frame {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.canvas-frame-empty {
+  justify-content: center;
+}
+
+.canvas-art {
+  display: block;
+  image-rendering: pixelated;
+  /* A hairline so an all-transparent ghost layer still has an edge. */
+  outline: 1px solid var(--line);
+}
+
+.canvas-scale {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+/* --- progress ------------------------------------------------------------- */
+
+.loading {
+  width: 100%;
+  max-width: 32rem;
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.loading p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.loading-bar {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  border: 0;
+  background: var(--line);
+}
+
+.loading-bar::-webkit-progress-bar {
+  background: var(--line);
+}
+
+.loading-bar::-webkit-progress-value {
+  background: var(--accent);
+}
+
+.loading-bar::-moz-progress-bar {
+  background: var(--accent);
+}
+
+/* --- mode switch ---------------------------------------------------------- */
+
+.mode-switch {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mode-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mode-button {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.mode-button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.mode-button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.mode-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mode-blurb {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* --- depth legend --------------------------------------------------------- */
+
+.legend {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.legend p {
+  margin: 0;
+}
+
+.legend-title {
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.legend-scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+
+.legend-scale li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--line);
+}
+
+.legend-note {
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+
+/* --- numbers -------------------------------------------------------------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.stat {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.stat dt {
+  margin: 0;
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  cursor: help;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: var(--step-1);
+  overflow-wrap: anywhere;
+}
+
+.address {
+  font: inherit;
+  color: var(--fg);
+}
+
+/* --- notices -------------------------------------------------------------- */
+
+.notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--bg-raised);
+  border-left: 3px solid var(--accent);
+  max-width: 34rem;
+}
+
+.notice-bad {
+  border-left-color: var(--danger);
+}
+
+.notice-quiet {
+  border-left-color: var(--line);
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.detail {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+@media (max-width: 30rem) {
+  .canvas-panel {
+    padding: 0.5rem;
+  }
+
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+}

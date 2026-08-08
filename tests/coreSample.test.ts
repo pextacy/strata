@@ -191,4 +191,33 @@ describe("bandsUpTo", () => {
     expect(bandsUpTo(sample, indexAtTime(p, 250)).map((b) => b.color)).toEqual([1, 2]);
     expect(bandsUpTo(sample, indexAtTime(p, 99))).toEqual([]);
   });
+
+  // On a toy day the placement indices are as small as the band count, which
+  // hides the whole class of bug: a real cell's nineteen bands carry indices in
+  // the hundred thousands, and anything that confuses the two hands back the
+  // finished stack for every moment of the day.
+  it("truncates a real day's stack, where the indices dwarf the band count", () => {
+    const p = realPlacements();
+    const layers = replay(p, SIZE);
+
+    let at = 0;
+    for (let cell = 0; cell < layers.depth.length; cell++) {
+      if (layers.depth[cell] > layers.depth[at]) at = cell;
+    }
+    const sample = coreSample(p, SIZE, at % SIZE, Math.floor(at / SIZE));
+    expect(sample.bands.length).toBeGreaterThan(2);
+
+    const middle = sample.bands[Math.floor(sample.bands.length / 2)];
+    const partial = bandsUpTo(sample, middle.index);
+
+    expect(partial.length).toBeLessThan(sample.bands.length);
+    expect(partial[partial.length - 1].index).toBe(middle.index);
+    expect(partial.every((band) => band.index <= middle.index)).toBe(true);
+    // The band on the surface at that moment is not yet covered by definition.
+    expect(partial[partial.length - 1].buried).toBe(false);
+
+    // The whole stack still comes back once the day has run past the last band.
+    expect(bandsUpTo(sample, p.n)).toEqual(sample.bands);
+    expect(bandsUpTo(sample, sample.bands[sample.bands.length - 1].index)).toEqual(sample.bands);
+  });
 });

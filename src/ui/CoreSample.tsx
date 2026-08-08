@@ -25,6 +25,12 @@ export interface CoreSampleProps {
   readonly openedAt: number;
   /** True while the day is still loading — the column says so rather than lying. */
   readonly loading?: boolean;
+  /**
+   * Bands this cell gets after the moment being shown, when the scrubber is
+   * somewhere in the middle of the day. Without it a cell painted at nine in the
+   * evening reads as never painted at all from five in the afternoon.
+   */
+  readonly laterBands?: number;
   /** Set when the pointer is only passing over: the URL has not moved. */
   readonly preview?: boolean;
 }
@@ -36,6 +42,7 @@ export function CoreSample({
   palette,
   openedAt,
   loading = false,
+  laterBands = 0,
   preview = false,
 }: CoreSampleProps) {
   const painters = new Set(bands.map((band) => band.artist)).size;
@@ -71,18 +78,26 @@ export function CoreSample({
             </p>
           ) : bands.length === 0 ? (
             <p role="status" className="core-note">
-              Nothing was ever painted here. This cell is still the colour the
-              canvas started as.
+              {laterBands === 0
+                ? "Nothing was ever painted here. This cell is still the colour the canvas started as."
+                : `Nothing here yet at this moment. This cell is painted ${laterBands} ${
+                    laterBands === 1 ? "time" : "times"
+                  } later in the day.`}
             </p>
           ) : (
             <>
               <p className="core-summary">
                 Painted <strong>{bands.length}</strong>{" "}
-                {bands.length === 1 ? "time" : "times"} by{" "}
+                {bands.length === 1 ? "time" : "times"}
+                {laterBands > 0 ? " so far" : ""} by{" "}
                 <strong>{painters}</strong> {painters === 1 ? "painter" : "painters"}.{" "}
                 {buried === 0
-                  ? "Nothing here was ever covered."
+                  ? laterBands > 0
+                    ? "Nothing here has been covered yet."
+                    : "Nothing here was ever covered."
                   : `${buried} ${buried === 1 ? "layer is" : "layers are"} buried under the one you can see.`}
+                {laterBands > 0 &&
+                  ` ${laterBands} more ${laterBands === 1 ? "layer lands" : "layers land"} on this cell before the day closes.`}
               </p>
 
               {/* Newest first, in the DOM and on screen alike, so the oldest

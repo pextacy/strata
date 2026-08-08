@@ -84,4 +84,41 @@ describe("CoreSample", () => {
     );
     expect(empty).toContain("Nothing was ever painted here");
   });
+
+  // Scrubbed to the middle of the day, "never" is a different claim from "not
+  // yet", and the column is only allowed to make the one that is true.
+  it("distinguishes a cell nobody painted from one painted later in the day", () => {
+    const notYet = renderToStaticMarkup(
+      <MemoryRouter>
+        <CoreSample
+          pixel={{ x: 0, y: 0 }}
+          bands={[]}
+          artists={ARTISTS}
+          palette={PALETTE}
+          openedAt={OPENED_AT}
+          laterBands={3}
+        />
+      </MemoryRouter>,
+    );
+    expect(notYet).not.toContain("Nothing was ever painted here");
+    expect(notYet).toContain("Nothing here yet at this moment");
+    expect(notYet).toContain("painted 3 times later in the day");
+  });
+
+  it("counts a partial stack as what has landed so far", () => {
+    const partial = renderToStaticMarkup(
+      <MemoryRouter>
+        <CoreSample
+          pixel={{ x: 236, y: 56 }}
+          bands={BANDS.slice(0, 2)}
+          artists={ARTISTS}
+          palette={PALETTE}
+          openedAt={OPENED_AT}
+          laterBands={2}
+        />
+      </MemoryRouter>,
+    );
+    expect(partial).toContain("Painted <strong>2</strong> times so far");
+    expect(partial).toContain("2 more layers land on this cell before the day closes");
+  });
 });

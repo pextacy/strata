@@ -9,6 +9,22 @@
       name="description"
       content="Every BasePaint canvas is a stack of paintings, and only the top one has ever been visible. Strata replays the on-chain strokes and digs out the rest."
     />
+    <!-- The shell's own tags. Every other route is served through api/html.ts,
+         which replaces the title and description with the day or artist being
+         asked for; Vercel serves this file straight from the filesystem for "/",
+         so the homepage unfurls from here. The card is today's canvas. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Strata" />
+    <meta property="og:title" content="Strata — what is buried in a BasePaint canvas" />
+    <meta
+      property="og:description"
+      content="Every BasePaint canvas is a stack of paintings, and only the top one has ever been visible. Strata replays the on-chain strokes and digs out the rest."
+    />
+    <meta property="og:image" content="/api/og" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/api/og" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

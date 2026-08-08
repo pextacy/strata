@@ -1,37 +1,10 @@
-/* The excavation view, laid out as a geological section: canvas at the top,
-   everything that describes it reading downward. Nothing here is allowed to be
-   louder than the canvas. Scoped to .excavation so it does not fight the phase 0
-   page while both are on disk. */
+/* What is particular to the day view. The canvas panel, the mode switch, the
+   stat grid and the notices are shared with every other page and live in
+   parts.css; this file is the head of the page and the numbers under it. */
 
-.excavation {
-  max-width: min(72rem, 100%);
-  margin: 0 auto;
-  padding: 1.5rem 1rem 4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.excavation .day-head {
+.day-head {
   display: grid;
   gap: 0.15rem;
-}
-
-.excavation .crumb {
-  margin: 0;
-  font-size: var(--step--1);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-}
-
-.excavation .crumb a {
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.excavation .crumb a:hover {
-  color: var(--accent);
 }
 
 .excavation h1 {
@@ -39,177 +12,27 @@
   line-height: 1.1;
 }
 
-.excavation .day-theme {
+.day-theme {
   margin: 0;
   color: var(--accent);
   font-size: var(--step-1);
 }
 
-.excavation .day-open {
+.day-open {
   margin: 0.25rem 0 0;
   font-size: var(--step--1);
   color: var(--muted);
 }
 
-/* --- canvas --------------------------------------------------------------- */
-
-.excavation .canvas-panel {
-  display: flex;
-  justify-content: center;
-  background: var(--bg-sunken);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1rem;
-  min-height: 12rem;
-}
-
-.canvas-frame {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.canvas-frame-empty {
-  justify-content: center;
-}
-
-.canvas-art {
-  display: block;
-  image-rendering: pixelated;
-  /* A hairline so an all-transparent ghost layer still has an edge. */
-  outline: 1px solid var(--line);
-}
-
-.canvas-scale {
-  margin: 0;
-  font-size: var(--step--1);
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
-
-.loading {
-  width: 100%;
-  max-width: 32rem;
+/* Everything under the canvas and its time band, in reading order. */
+.excavation-below {
   display: grid;
-  gap: 0.6rem;
-  justify-items: center;
-  text-align: center;
+  gap: 1.25rem;
 }
 
-.excavation .loading p {
+.day-elsewhere {
   margin: 0;
-  color: var(--muted);
-}
-
-.loading-bar {
-  width: 100%;
-  height: 4px;
-  appearance: none;
-  border: 0;
-  background: var(--line);
-}
-
-.loading-bar::-webkit-progress-bar {
-  background: var(--line);
-}
-
-.loading-bar::-webkit-progress-value {
-  background: var(--accent);
-}
-
-.loading-bar::-moz-progress-bar {
-  background: var(--accent);
-}
-
-/* --- mode switch ---------------------------------------------------------- */
-
-.mode-switch {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.mode-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.excavation .mode-button {
-  padding: 0.35rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--fg);
-  cursor: pointer;
-  letter-spacing: 0.04em;
-}
-
-.excavation .mode-button:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-
-.excavation .mode-button[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
-}
-
-.excavation .mode-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.mode-blurb {
-  margin: 0;
-  color: var(--muted);
   font-size: var(--step--1);
-}
-
-/* --- depth legend --------------------------------------------------------- */
-
-.legend {
-  display: grid;
-  gap: 0.4rem;
-}
-
-.excavation .legend p {
-  margin: 0;
-}
-
-.legend-title {
-  font-size: var(--step--1);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-}
-
-.legend-scale {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--step--1);
-}
-
-.legend-scale li {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.legend-swatch {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid var(--line);
-}
-
-.legend-note {
-  font-size: var(--step--1);
-  color: var(--muted);
 }
 
 /* --- numbers -------------------------------------------------------------- */
@@ -219,36 +42,6 @@
   gap: 1.25rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--line);
-}
-
-.excavation .stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.stat {
-  display: grid;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.excavation .stat dt {
-  margin: 0;
-  font-size: var(--step--1);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  cursor: help;
-}
-
-.excavation .stat-value {
-  margin: 0;
-  font-size: var(--step-1);
-  overflow-wrap: anywhere;
 }
 
 .palette-row {
@@ -275,95 +68,4 @@
   width: 1.25rem;
   height: 1.25rem;
   border: 1px solid var(--line);
-}
-
-.address {
-  font: inherit;
-  color: var(--fg);
-}
-
-/* --- notices -------------------------------------------------------------- */
-
-.excavation .notice {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  background: var(--bg-raised);
-  border-left: 3px solid var(--accent);
-  max-width: 34rem;
-}
-
-.excavation .notice-bad {
-  border-left-color: var(--danger);
-}
-
-.excavation .notice-quiet {
-  border-left-color: var(--line);
-  color: var(--muted);
-  font-size: var(--step--1);
-}
-
-.excavation .detail {
-  display: block;
-  margin-top: 0.4rem;
-  color: var(--muted);
-  font-size: var(--step--1);
-}
-
-.excavation .day-foot {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
-  font-size: var(--step--1);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-@media (max-width: 30rem) {
-  .excavation {
-    padding: 1rem 0.75rem 3rem;
-    gap: 1.25rem;
-  }
-
-  .excavation .canvas-panel {
-    padding: 0.5rem;
-  }
-
-  .excavation .stats {
-    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
-  }
-}
-
-/* --- the dig: canvas and core sample side by side ------------------------- */
-
-.excavation .excavation-dig {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-  gap: 1rem;
-  align-items: start;
-}
-
-/* Under about a tablet the column goes below the canvas rather than squeezing
-   the artwork, which is the thing the page is for. */
-@media (max-width: 56rem) {
-  .excavation .excavation-dig {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* The canvas keeps its own height; a long core sample must not stretch it. */
-.excavation .excavation-dig > .canvas-panel {
-  align-self: start;
 }
