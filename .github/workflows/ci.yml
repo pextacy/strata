@@ -1,0 +1,54 @@
+# The green baseline, enforced. Everything here runs offline: `schema.json` is
+# committed precisely so a build never depends on the GraphQL endpoint being up,
+# and the tests reach no network. The one check that does — replaying a day and
+# diffing it against the official render — is in `verify.yml`, on its own
+# schedule, because a flaky third party must never be able to fail a pull
+# request that did not touch anything.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A new push supersedes the run in progress on the same ref.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22 is what the Vercel functions run on; 24 is where the toolchain is
+        # heading. The build has to hold on both.
+        node: [22, 24]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

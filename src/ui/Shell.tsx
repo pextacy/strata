@@ -8,6 +8,7 @@ import { Link, Outlet, useMatch, useNavigate, useSearchParams } from "react-rout
 import { currentDay } from "../core/day-math.ts";
 import { BEACON_URL, basepaintUrl } from "../data/links.ts";
 import { isViewMode } from "../render/layers.ts";
+import { RouteErrorBoundary } from "./ErrorBoundary.tsx";
 import "../styles/shell.css";
 
 const REPO_URL: string | undefined = import.meta.env.VITE_REPO_URL;
@@ -25,7 +26,9 @@ export function Shell({ children }: ShellProps) {
       </a>
       <SiteHeader />
       <main id="content" className="site-main" tabIndex={-1}>
-        {children ?? <Outlet />}
+        {/* Scoped to the page, so a day that throws still leaves the header and
+            the day navigation to walk away with. */}
+        <RouteErrorBoundary scope="This page">{children ?? <Outlet />}</RouteErrorBoundary>
       </main>
       <SiteFooter />
     </>

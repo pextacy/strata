@@ -1,0 +1,56 @@
+# The one hard claim, checked against the live chain.
+#
+# `npm run verify` replays a day from the on-chain strokes and diffs it cell by
+# cell against the render basepaint.net publishes. Anything other than zero
+# mismatched cells is a bug in Strata. It is kept out of CI because it depends
+# on two third-party services being up, and a pull request that touched nothing
+# must not fail because an indexer was busy — but it is worth knowing within a
+# day if the answer ever changes, so it runs on a schedule.
+#
+# The days are the ones the README publishes a table for, both canvas sizes and
+# either side of the size change at day 366.
+
+name: Verify against the chain
+
+on:
+  schedule:
+    # Daily, well after a canvas closes so the official render exists.
+    - cron: "40 3 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Days to verify, space separated
+        required: false
+        default: "1 100 250 365 366 500 750 900 1000 1094"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Replay each day and diff it against the official render
+        # Through the environment, not interpolated into the command: an
+        # expression pasted straight into `run:` is a shell injection, and the
+        # fact that only a collaborator can dispatch this is not a reason to
+        # write it the unsafe way.
+        env:
+          DAYS: ${{ inputs.days || '1 100 250 365 366 500 750 900 1000 1094' }}
+        run: npm run verify -- $DAYS
+
+      - name: Drive today's unfinished canvas end to end
+        # Today has no published render to diff against, so this checks the
+        # invariants that survive without one.
+        run: npm run live

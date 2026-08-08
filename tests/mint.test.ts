@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatEth, isOnSale, saleEndsIn, type MintTerms } from "../src/data/mint.ts";
+import { formatEth, isOnSale, saleEndsIn, type MintTerms } from "../src/data/mintTerms.ts";
 import { BASEPAINT_ABI, REWARDS_ABI } from "../src/data/rewards.ts";
 
 /**

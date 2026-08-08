@@ -9,18 +9,23 @@ import { currentDay } from "../core/day-math.ts";
 import { basepaintDayUrl } from "../data/links.ts";
 import {
   MintError,
-  connect,
-  fetchMintTerms,
   formatEth,
   injectedProvider,
   isOnSale,
-  mintDay,
-  publicClient,
-  referrerAddress,
   saleEndsIn,
   type MintTerms,
-} from "../data/mint.ts";
+} from "../data/mintTerms.ts";
 import "../styles/mint.css";
+
+/**
+ * Everything that talks to Base is behind this, and it is only ever awaited —
+ * never imported at the top of the file. `../data/mint.ts` brings viem, which
+ * is 87 kB gzipped and the single largest thing the app could load; a day page
+ * for a canvas that left its sale window years ago, which is nearly all of
+ * them, now renders without any of it. The sale-window arithmetic that decides
+ * whether this button appears at all lives in `mintTerms.ts` and costs nothing.
+ */
+const chain = () => import("../data/mint.ts");
 
 export interface MintButtonProps {
   readonly day: number;
@@ -62,7 +67,8 @@ export function MintButton({ day }: MintButtonProps) {
 
     let live = true;
     setTerms({ status: "loading" });
-    fetchMintTerms()
+    chain()
+      .then(async ({ fetchMintTerms }) => await fetchMintTerms())
       .then((value) => live && setTerms({ status: "ready", terms: value }))
       .catch((error: unknown) => {
         if (!live) return;
@@ -80,6 +86,7 @@ export function MintButton({ day }: MintButtonProps) {
     if (terms.status !== "ready") return;
     setTx({ status: "signing" });
     try {
+      const { connect, mintDay, publicClient, referrerAddress } = await chain();
       const account = await connect();
       const hash = await mintDay({
         day,

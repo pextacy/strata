@@ -14,6 +14,7 @@ import { artistDaySurvival } from "../src/core/survival.ts";
 import { fetchAccount, fetchArtistDays } from "../src/data/queries.ts";
 import { artistCard, dayCard, nodeDeflate } from "./_lib/card.ts";
 import { replayDay } from "./_lib/day.ts";
+import { assetHeaders } from "./_lib/security.ts";
 
 export const config = { runtime: "nodejs" };
 
@@ -84,9 +85,9 @@ function png(body: Uint8Array, cacheControl: string): Response {
   return new Response(body as BodyInit, {
     status: 200,
     headers: {
+      ...assetHeaders(),
       "content-type": "image/png",
       "cache-control": cacheControl,
-      "x-content-type-options": "nosniff",
     },
   });
 }
@@ -99,9 +100,9 @@ function problem(message: string, status = 400): Response {
   return new Response(message, {
     status,
     headers: {
+      ...assetHeaders(),
       "content-type": "text/plain; charset=utf-8",
       "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
     },
   });
 }

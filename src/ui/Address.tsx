@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 
-import { ensName, knownEnsName } from "../data/ens.ts";
+import { knownEnsName } from "../data/ensCache.ts";
 import { shortAddress } from "./format.ts";
 
 export interface AddressProps {
@@ -29,9 +29,18 @@ export function Address({ address, keep = 4, raw = false }: AddressProps) {
 
     let live = true;
     setName(null);
-    void ensName(clean).then((resolved) => {
-      if (live) setName(resolved);
-    });
+    // The resolver is fetched here rather than imported at the top, because it
+    // brings viem with it — 87 kB of the bundle, for a decoration. The canvas
+    // is on screen before any of this is asked for, and a page whose addresses
+    // all resolved earlier in the session never asks at all.
+    void import("../data/ens.ts")
+      .then(async ({ ensName }) => await ensName(clean))
+      .then((resolved) => {
+        if (live) setName(resolved);
+      })
+      // A name is decoration and a failure is silent by design — including the
+      // failure to load the code that would have resolved one.
+      .catch(() => {});
     return () => {
       live = false;
     };

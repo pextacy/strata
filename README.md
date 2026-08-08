@@ -60,19 +60,22 @@ Run on day 1095 mid-afternoon (61,663 placements, 809 of 1,440 minutes elapsed) 
 
 ```bash
 npm install
-npm run introspect     # writes src/data/schema.json from the live GraphQL endpoint
 npm run dev            # http://localhost:5173
 ```
 
-`npm run introspect` is a real network call and must be run once on a clean checkout — the GraphQL field names come from the live schema, never from a guess.
+Node 22 or newer. CI builds on 22 and 24; the Vercel functions run on 22.
+
+`src/data/schema.json` is committed, so a clean checkout builds and runs without touching the network. It is the record of what the indexer's schema actually says, and every GraphQL field name in `src/data/queries.ts` was read out of it rather than guessed. Re-run `npm run introspect` — a real network call — before changing a query, and commit what it writes.
 
 There is no backend and no database. Every number on screen is derived at runtime from the BasePaint indexer and the BasePaint theme API; decoded days are cached in the browser's IndexedDB so a second visit is instant.
+
+A render that throws does not blank the page. Every page sits inside an error boundary that keeps the header and the day navigation alive, says what broke in words, and shows the underlying error rather than swallowing it — and clears itself when you navigate, so one bad page does not follow you around the site.
 
 | command | what it does |
 | --- | --- |
 | `npm run dev` | Vite dev server |
 | `npm run build` | typecheck, then build to `dist/` |
-| `npm run test` | decoder, replay, keyframe, survival and render tests |
+| `npm run test` | decoder, replay, keyframe, survival, render, page-meta, header and bundle tests |
 | `npm run typecheck` | `tsc -b` |
 | `npm run lint` | oxlint |
 | `npm run verify -- 500` | replay day 500 and diff it against the official PNG |
@@ -91,6 +94,25 @@ Every variable is optional; copy `.env.example` to `.env.local` to set any of th
 ### Deploying
 
 `vercel.json` carries the build settings and the routing. Set `VITE_REFERRER_ADDRESS` in the Vercel project settings if you want mints attributed.
+
+Every path that is not a static file is served by `api/html.ts`, the homepage included — a crawler does not run the router, so the title, description and card have to be on the HTML it is handed. That function is also what makes a wrong URL answer `404` rather than `200`: the app is one document for every route, and without it `/day/99999` would invite indexing. Two things it will not take from the request are the host it fetches its own shell from and the domain it writes into canonical links, both of which come from the deployment's own environment; `Host: evil.example` puts that string nowhere in the response, and there is a test that says so.
+
+`/robots.txt` and `/sitemap.xml` are functions rather than files in `public/`, because both need to name the production domain and a static file cannot know it. The sitemap lists every day that has closed, with the date it closed.
+
+The security headers — the content security policy above all — are in `api/_lib/security.ts`. The policy is repeated once in `vercel.json`, for the built `index.html` that Vercel serves off disk, and a test fails if the two ever disagree. `script-src 'self'` holds only because the built shell has no inline script; anything that adds one breaks the app loudly rather than weakening the policy quietly.
+
+### What runs on its own
+
+| workflow | when | what it does |
+| --- | --- | --- |
+| `.github/workflows/ci.yml` | every push and pull request | typecheck, lint, test and build, on Node 22 and 24 |
+| `.github/workflows/verify.yml` | daily, and on demand | replays the ten days in the table above and diffs each against the official render, then drives today's canvas end to end |
+
+The split is deliberate. CI reaches no network at all, so a pull request can never fail because an indexer was busy. `verify` is the one that talks to the chain and to `basepaint.net`, and it is the one that would catch the replay ever ceasing to be the canvas.
+
+### Weight
+
+The canvas is the product, so it does not wait on anything optional. viem is 87 kB gzipped — more than all of Strata's own code — and it exists here for two things a visitor may never do: turning an address into an ENS name, and minting. Both are loaded on demand, which leaves 99 kB gzipped of initial JavaScript instead of 139 kB. A day page for a canvas that left its sale window years ago, which is nearly every day page, loads none of it: the arithmetic that rules the mint button out lives in `src/data/mintTerms.ts` and touches no chain. `tests/bundle.test.ts` fails if a static import ever quietly undoes this.
 
 ## Licence and credit
 

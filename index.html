@@ -9,10 +9,11 @@
       name="description"
       content="Every BasePaint canvas is a stack of paintings, and only the top one has ever been visible. Strata replays the on-chain strokes and digs out the rest."
     />
-    <!-- The shell's own tags. Every other route is served through api/html.ts,
-         which replaces the title and description with the day or artist being
-         asked for; Vercel serves this file straight from the filesystem for "/",
-         so the homepage unfurls from here. The card is today's canvas. -->
+    <!-- The shell's own tags, and the last resort. In the deployed site every
+         route — the homepage included — is served through api/html.ts, which
+         strips these and writes the title, description and card for the day or
+         artist being asked for. They are what shows in the dev server, and what
+         would show if that function ever failed to rewrite them. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Strata" />
     <meta property="og:title" content="Strata — what is buried in a BasePaint canvas" />

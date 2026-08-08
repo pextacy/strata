@@ -9,6 +9,8 @@
 import { createPublicClient, fallback, http, type Address } from "viem";
 import { mainnet } from "viem/chains";
 
+import { knownEnsName, rememberEnsName } from "./ensCache.ts";
+
 /**
  * ENS lives on mainnet, and Strata has no key for it, so it reads from public
  * endpoints. The chain's own default is not one of them: viem currently ships
@@ -33,16 +35,9 @@ const client = createPublicClient({
   ),
 });
 
-/** Resolved, unresolved, and failed lookups all land here for the session. */
-const names = new Map<string, string | null>();
 const inFlight = new Map<string, Promise<string | null>>();
 
 const isAddress = (value: string): value is Address => /^0x[0-9a-fA-F]{40}$/.test(value);
-
-/** The name already known for this address, without asking the network. */
-export function knownEnsName(address: string): string | null | undefined {
-  return names.get(address.toLowerCase());
-}
 
 /**
  * The ENS name for an address, or null when it has none — which is the common
@@ -52,14 +47,14 @@ export function knownEnsName(address: string): string | null | undefined {
 export function ensName(address: string): Promise<string | null> {
   const key = address.toLowerCase();
 
-  const cached = names.get(key);
+  const cached = knownEnsName(key);
   if (cached !== undefined) return Promise.resolve(cached);
 
   const pending = inFlight.get(key);
   if (pending !== undefined) return pending;
 
   if (!isAddress(key)) {
-    names.set(key, null);
+    rememberEnsName(key, null);
     return Promise.resolve(null);
   }
 
@@ -73,7 +68,7 @@ export function ensName(address: string): Promise<string | null> {
     })
     .catch(() => null)
     .then((name) => {
-      names.set(key, name);
+      rememberEnsName(key, name);
       inFlight.delete(key);
       return name;
     });

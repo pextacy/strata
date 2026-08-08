@@ -6,6 +6,11 @@
  *
  * Everything here reads the chain for its facts: the price, which day is open,
  * and how long a canvas stays on sale. Nothing is assumed from the clock.
+ *
+ * Everything here also needs viem, which is why the sale-window arithmetic and
+ * the price formatting live in `mintTerms.ts` instead: this module is imported
+ * on demand, at the moment there is something to read or sign, and a day page
+ * that nobody mints from never loads it at all.
  */
 
 import {
@@ -27,16 +32,7 @@ import {
   REWARDS_ABI,
   REWARDS_ADDRESS,
 } from "./rewards.ts";
-
-/** An EIP-1193 provider, which is what a browser wallet injects. */
-export interface InjectedProvider {
-  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-}
-
-export const injectedProvider = (): InjectedProvider | null => {
-  const eth = (globalThis as { ethereum?: InjectedProvider }).ethereum;
-  return eth ?? null;
-};
+import { MintError, injectedProvider, type MintTerms } from "./mintTerms.ts";
 
 const RPC: string | undefined = import.meta.env.VITE_BASE_RPC;
 
@@ -53,17 +49,6 @@ export function referrerAddress(): Address | undefined {
 
 export const publicClient = () =>
   createPublicClient({ chain: base, transport: http(RPC) });
-
-export interface MintTerms {
-  /** Wei per edition, from `openEditionPrice()`. */
-  readonly price: bigint;
-  /** The day the contract is currently taking pixels for. */
-  readonly openDay: number;
-  /** Seconds a canvas is open, from `epochDuration()`. Sale runs for the same. */
-  readonly epochDuration: number;
-  /** Unix seconds the whole thing started. */
-  readonly startedAt: number;
-}
 
 /**
  * All four in one `eth_call` through Multicall3, rather than four requests that
@@ -90,20 +75,6 @@ export async function fetchMintTerms(): Promise<MintTerms> {
   };
 }
 
-/**
- * A canvas is on sale for one epoch after it closes — the day that just ended is
- * the one being sold while the next one is painted. Taken from the contract's
- * own `today()` rather than from the wall clock, so the button is never open on
- * a day the contract would revert on.
- */
-export const isOnSale = (day: number, terms: MintTerms): boolean => day === terms.openDay - 1;
-
-/** Seconds until this canvas leaves its sale window, or 0 once it has. */
-export function saleEndsIn(day: number, terms: MintTerms, nowSec: number): number {
-  const closesAt = terms.startedAt + (day + 1) * terms.epochDuration;
-  return Math.max(0, closesAt - nowSec);
-}
-
 export interface MintRequest {
   readonly day: number;
   readonly count: number;
@@ -122,13 +93,6 @@ export interface MintRequest {
   /** Who earns the referral share. Absent means the mint carries no referrer. */
   readonly referrer?: Address;
   readonly price: bigint;
-}
-
-export class MintError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "MintError";
-  }
 }
 
 /** The connected account, asking the wallet to connect if it has not already. */
@@ -195,22 +159,3 @@ async function ensureBase(wallet: {
   }
 }
 
-/**
- * Wei as a short ETH string. Four decimals is enough for an open edition, which
- * has cost thousandths of an ETH for its whole history.
- *
- * The one thing this must never do is print a price of zero for a price that is
- * not zero. Truncating at four decimals did exactly that below 0.0001 ETH, and
- * "Mint for 0 ETH" on a button that spends money is the worst sentence in the
- * app.
- */
-export function formatEth(wei: bigint): string {
-  const negative = wei < 0n;
-  const value = negative ? -wei : wei;
-  const whole = value / 10n ** 18n;
-  const rest = value % 10n ** 18n;
-  const decimals = rest.toString().padStart(18, "0").slice(0, 4).replace(/0+$/, "");
-  if (decimals === "" && whole === 0n && value > 0n) return "<0.0001";
-  const sign = negative ? "-" : "";
-  return decimals === "" ? `${sign}${whole}` : `${sign}${whole}.${decimals}`;
-}

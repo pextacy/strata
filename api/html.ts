@@ -9,6 +9,8 @@
 import { checksumAddress } from "../src/data/address.ts";
 import { currentDay } from "../src/core/day-math.ts";
 import { fetchTheme } from "../src/data/theme.ts";
+import { assetOrigin, publicOrigin } from "./_lib/origin.ts";
+import { assetHeaders, documentHeaders } from "./_lib/security.ts";
 
 export const config = { runtime: "nodejs" };
 
@@ -22,6 +24,14 @@ export interface Meta {
   /** Query string for /api/og, or null for the routes with no card of their own. */
   readonly card: string | null;
   readonly cacheControl: string;
+  /**
+   * The status the response goes out with. The app is one HTML document for
+   * every route, so without this every wrong URL would answer 200 — a soft 404,
+   * which tells a crawler that `/day/99999` and `/artist/vitalik` are real pages
+   * worth indexing and keeping. They are not, and the SPA already says so on
+   * screen; this makes the status agree with the sentence.
+   */
+  readonly status: number;
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -40,9 +50,9 @@ export default async function handler(request: Request): Promise<Response> {
       {
         status: 503,
         headers: {
+          ...assetHeaders(),
           "content-type": "text/plain; charset=utf-8",
           "cache-control": "no-store",
-          "x-content-type-options": "nosniff",
           "x-strata-detail": detail(error),
         },
       },
@@ -52,11 +62,11 @@ export default async function handler(request: Request): Promise<Response> {
   const html = injectMeta(shell, meta, publicOrigin(url), url.pathname);
 
   return new Response(html, {
-    status: 200,
+    status: meta.status,
     headers: {
+      ...documentHeaders(),
       "content-type": "text/html; charset=utf-8",
       "cache-control": meta.cacheControl,
-      "x-content-type-options": "nosniff",
     },
   });
 }
@@ -67,37 +77,7 @@ const detail = (error: unknown): string =>
     .replace(/[^\x20-\x7e]+/g, " ")
     .slice(0, 200);
 
-/**
- * `request.url` is built from the Host header, which the client sends and can
- * say anything. Two things here are too dangerous to take from it.
- *
- * The shell is fetched and then served as this site's own HTML: sourcing it from
- * an attacker-supplied host would let them choose the page under our domain. It
- * comes from `VERCEL_URL`, which names this exact deployment, so the shell is
- * always the one this build produced.
- *
- * The canonical link and the card URL are absolute and end up in other people's
- * indexes and timelines, so they come from the project's production domain.
- *
- * With neither variable set — `vercel dev`, or a plain `node` — there is no
- * deployment to ask about and the request's own origin is all there is.
- */
-const fromEnv = (name: string): string | null => {
-  const value = process.env[name];
-  return value === undefined || value === "" ? null : value;
-};
-
-function assetOrigin(url: URL): string {
-  const deployment = fromEnv("VERCEL_URL");
-  return deployment === null ? url.origin : `https://${deployment}`;
-}
-
-function publicOrigin(url: URL): string {
-  const production = fromEnv("VERCEL_PROJECT_PRODUCTION_URL");
-  return production === null ? url.origin : `https://${production}`;
-}
-
-async function metaFor(pathname: string): Promise<Meta> {
+export async function metaFor(pathname: string): Promise<Meta> {
   const day = matchDay(pathname);
   if (day !== null) {
     const theme = await themeName(day);
@@ -111,6 +91,7 @@ async function metaFor(pathname: string): Promise<Meta> {
       cacheControl: settled
         ? "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
         : "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
+      status: 200,
     };
   }
 
@@ -121,6 +102,7 @@ async function metaFor(pathname: string): Promise<Meta> {
       description: `How much of what ${shorten(address)} painted on BasePaint is still on the canvas, who covered them, and who they covered.`,
       card: `address=${address}`,
       cacheControl: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
+      status: 200,
     };
   }
 
@@ -130,14 +112,20 @@ async function metaFor(pathname: string): Promise<Meta> {
       description: `${TAGLINE} Strata replays the on-chain strokes and digs out the rest.`,
       card: `day=${currentDay()}`,
       cacheControl: "public, max-age=0, s-maxage=300, stale-while-revalidate=3600",
+      status: 200,
     };
   }
 
+  // Not a route. This is the same answer the app gives on screen, and it says
+  // the same thing to a crawler: the words come from `NotFound`, the status
+  // from here. Kept out of the CDN for long, because a URL that is wrong today
+  // — a day that has not opened yet, most of all — can be right tomorrow.
   return {
-    title: `${SITE}`,
-    description: TAGLINE,
+    title: `No such page — ${SITE}`,
+    description: `Strata has a page per BasePaint day and a page per artist. This is neither.`,
     card: null,
-    cacheControl: "public, max-age=0, s-maxage=3600",
+    cacheControl: "public, max-age=0, s-maxage=60",
+    status: 404,
   };
 }
 
@@ -193,6 +181,10 @@ export function injectMeta(shell: string, meta: Meta, origin: string, pathname: 
   const tags = [
     `<title>${escapeHtml(meta.title)}</title>`,
     tag("description", meta.description),
+    // Belt and braces on a page that is not one. The status alone is enough for
+    // a crawler that reads it; this is for the ones that do not, and for the
+    // preview cards that render a link before anybody follows it.
+    ...(meta.status === 200 ? [] : [tag("robots", "noindex, follow")]),
     `<link rel="canonical" href="${escapeAttr(canonical)}" />`,
     property("og:type", "website"),
     property("og:site_name", SITE),
