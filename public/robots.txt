@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Every route is a live replay of the BasePaint indexer, so there are as many
+# day and artist URLs as there are days and addresses. Nothing here is secret;
+# crawl what you like.
