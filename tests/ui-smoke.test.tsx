@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../src/App.tsx";
 import Home from "../src/routes/Home.tsx";
@@ -51,8 +51,43 @@ describe("Shell", () => {
     expect(html).toContain("CC0");
   });
 
-  it("does not link to a repository that has not been set", () => {
-    expect(html).not.toContain(">Source<");
+  /**
+   * Both branches, against a stubbed variable rather than whatever the machine
+   * running the tests happens to have in `.env.local`. As one assertion on the
+   * ambient value this passed only for a developer who had not configured a
+   * repository, and went red the moment anyone did — which is the wrong way
+   * round, since a configured repository is the normal case.
+   *
+   * `Shell` reads the variable once at module scope, so the module has to be
+   * re-evaluated after the stub for the stub to be seen.
+   */
+  const footerWith = async (repo: string): Promise<string> => {
+    vi.resetModules();
+    vi.stubEnv("VITE_REPO_URL", repo);
+    const { Shell: Fresh } = await import("../src/ui/Shell.tsx");
+    return renderToStaticMarkup(
+      <MemoryRouter>
+        <Fresh>
+          <p>page</p>
+        </Fresh>
+      </MemoryRouter>,
+    );
+  };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("links to the source once a repository is set", async () => {
+    const out = await footerWith("https://github.com/pextacy/strata");
+    expect(out).toContain(">Source<");
+    expect(out).toContain('href="https://github.com/pextacy/strata"');
+  });
+
+  it("says nothing at all when no repository is set", async () => {
+    // A dead link is worse than no link.
+    expect(await footerWith("")).not.toContain(">Source<");
   });
 });
 

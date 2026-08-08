@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local env
-.env.local
-.env*.local
+# Local env. Every .env file is local — Vite reads plain `.env` as well as
+# `.env.local`, and the first spelling was not covered here, so a referrer
+# address written to the obvious filename would have been committed.
+# `.env.example` is the exception: it is the template and carries no values.
+.env
+.env.*
+!.env.example

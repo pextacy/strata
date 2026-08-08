@@ -2,6 +2,14 @@
   "name": "strata",
   "private": true,
   "version": "0.0.0",
+  "description": "Replays the on-chain stroke history of a BasePaint canvas and shows what is buried under the published image.",
+  "license": "MIT",
+  "author": "pextacy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pextacy/strata.git"
+  },
+  "homepage": "https://github.com/pextacy/strata#readme",
   "type": "module",
   "engines": {
     "node": ">=22"
